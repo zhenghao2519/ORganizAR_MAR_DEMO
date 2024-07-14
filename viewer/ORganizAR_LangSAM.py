@@ -19,7 +19,7 @@ import torch
 import clip
 import time
 # Settings --------------------------------------------------------------------
-from_recording = True #set to run live on HL vs from recorded dataset
+from_recording = False #set to run live on HL vs from recorded dataset
 visualization_enabled = False
 write_data = True
 wsl = True
@@ -38,7 +38,7 @@ else:
     path_start = "C:/Users/Marc/Desktop/CS/MARPROJECT/"
 
 # HoloLens address
-host = '192.168.0.102'
+host = '192.168.0.101'
 
 # Directory containing the recorded data
 path = path_start + 'viewer/data'
@@ -79,25 +79,27 @@ else:
     
 image_pil_timer = Image.open(timer_image_path)
 image_pil_bed = Image.open(bed_image_path)
-carm = "C-arm machine, characterized by its distinctive C-shaped arm which houses an X-ray source and detector connected to a base"
-us = "The ultrasound machine, is characterized by a large monitor on top, also there are fleshlight shaped ultrasound probes attached to it's sides"
-shelf = "shelf"
-table = "table in the center of the room with a light-blue cloth with human dummy doll"
+# carm = "C-arm machine, characterized by its distinctive C-shaped arm which houses an X-ray source and detector connected to a base"
+# us = "The ultrasound machine, is characterized by a large monitor on top, also there are fleshlight shaped ultrasound probes attached to it's sides"
+# shelf = "shelf"
+# table = "table in the center of the room with a light-blue cloth with human dummy doll"
 
 #encode images using clip lower sims, shoudl we use the same prompt for clip grounding different, set up testing all datasets
-prompts = [carm,us,shelf,table]
+#prompts = [carm,us,shelf,table]
 images = [image_pil_timer,image_pil_bed]
-prompts = ["C-arm machine, characterized both by its distinctive C-shaped arm which houses an X-ray source and detector and it's connected control unit with various dials, buttons. White and grey in color.","The ultrasound machine tower is characterized by a large monitor on top, a console with numerous buttons and knobs, and a wheeled base. The machine is predominantly white with grey accents. Also there are fleshlight shaped ultrasound probes attached to it's sides","medical equipment cart, It has multiple shelves, a handle on top, and is predominantly grey with some blue sections. The cart has nothing on top; it is empty.","table in the center of the room with a light-blue cloth"]
+#prompts = ["C-arm machine, characterized both by its distinctive C-shaped arm which houses an X-ray source and detector and it's connected control unit with various dials, buttons. White and grey in color.","The ultrasound machine tower is characterized by a large monitor on top, a console with numerous buttons and knobs, and a wheeled base. The machine is predominantly white with grey accents. Also there are fleshlight shaped ultrasound probes attached to it's sides","medical equipment cart, It has multiple shelves, a handle on top, and is predominantly grey with some blue sections. The cart has nothing on top; it is empty.","table in the center of the room with a light-blue cloth"]
+prompts =  ["orange pen", "timer", "phone","keyboard"]
 data = {}
 CLIP_SIM_THRESHOLD = 0.6
 DINO_THRESHOLD = 0.35
-MIN_FRAME_NUM =55 #59  
+MIN_FRAME_NUM =5 #59  
 enable = True
 
 # unity pc vis secction
 # quad scale in meters
 quad_scale: List[float] = [0.005, 0.005, 0.005]
 sphere_scale: List[float] = [0.001, 0.001, 0.001]
+arrow_scale : List[float] = [7, 7, 7]
 total_quad_count: int = 500 
 
 def get_boxes(image, prompt, box_threshold=0.3, text_threshold=0.25):
@@ -195,14 +197,20 @@ def display_centroid(points: np.ndarray, prompt_index: int) -> np.ndarray:
     point = [x_median, y_median, z_median]
     print(f"median{point}")
     point[2] = -point[2] #unity is lefthanded
-    display_list.create_primitive(hl2ss_rus.PrimitiveType.Sphere) #TODO store key for later manipulation
+    display_list.create_arrow() #TODO store key for later manipulation
     display_list.set_target_mode(hl2ss_rus.TargetMode.UseLast) 
-    display_list.set_world_transform(prompt_index, point, [0, 0, 0, 1], sphere_scale) # Set the quad's world transform
+    display_list.set_world_transform(prompt_index, point, [0, 0, 0, 1], arrow_scale) # Set the quad's world transform
     display_list.set_active(prompt_index, 1) # Make the quad visible
     display_list.end_display_list() # End sequence
     ipc.push(display_list) # Send commands to server
 
     return ipc.pull(display_list) # Get results from server
+def send_detection(prompt_index: int):
+    display_list = hl2ss_rus.command_buffer()
+    display_list.begin_display_list() 
+    display_list.send_dino_detection(prompt_index)
+    display_list.end_display_list() 
+    ipc.push(display_list) 
 
 def apply_clip_batch(prompt, max_results, threshold_percentage):
     prompt_data = data[prompt]
@@ -221,7 +229,8 @@ def apply_clip_batch(prompt, max_results, threshold_percentage):
                 clip_embedded_img = box_data['embedding']
                 image_embeddings.append(clip_embedded_img)
                 box_references.append(box_data)
-
+    if(len(image_embeddings)== 0):
+        return
     with torch.no_grad():
         image_embeddings = model_clip.encode_image(torch.stack(image_embeddings))
     sim = clip_calculate_similarity(prompt_embedding, image_embeddings)[0]
@@ -408,8 +417,11 @@ if __name__ == '__main__':
             if counter < MIN_FRAME_NUM:
                 print(f"view: {counter}")
                 counter +=1
-                for prompt in data.keys():
+                for index, prompt in enumerate(data.keys()):
                     boxes, logits, phrases = get_boxes(color_pil, prompt)
+                    if(len(boxes) != 0 and not from_recording):
+                        send_detection(index)
+                        print(f"sending {prompt}")
                     embedded_cropped_box_data = []
 
                     for box, phrase, logit in zip(boxes, phrases, logits):

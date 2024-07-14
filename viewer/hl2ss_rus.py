@@ -75,3 +75,8 @@ class command_buffer(hl2ss.umq_command_buffer):
     def set_target_mode(self, mode):
         self.add(20, struct.pack('<I', mode))
 
+    def create_arrow(self):
+        self.add(21, b'')
+    def send_dino_detection(self, type):
+        self.add(22, struct.pack('<I', type))
+
