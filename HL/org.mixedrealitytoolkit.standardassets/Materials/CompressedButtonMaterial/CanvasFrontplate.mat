@@ -9,6 +9,8 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: CanvasFrontplate
   m_Shader: {fileID: 4800000, guid: 45e7207db23579b4985a9d28edfef6f1, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _BLOB_ENABLE_
   - _BLOB_ENABLE_2_
@@ -22,6 +24,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -46,7 +49,7 @@ Material:
     - _Blob_Inner_Fade_2_: 0.1
     - _Blob_Intensity_: 0.5
     - _Blob_Near_Distance_: 0
-    - _Blob_Near_Size_: 0.025
+    - _Blob_Near_Size_: 0.244
     - _Blob_Near_Size_2_: 0.025
     - _Blob_Pulse_: 0
     - _Blob_Pulse_2_: 0

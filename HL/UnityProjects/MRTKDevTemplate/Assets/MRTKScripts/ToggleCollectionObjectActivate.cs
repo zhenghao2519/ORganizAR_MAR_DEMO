@@ -29,7 +29,7 @@ namespace MixedReality.Toolkit.Examples.Demos
             toggleCollection.OnToggleSelected.AddListener((toggleSelectedIndex) => Set(toggleSelectedIndex));
         }
 
-        private void Set(int index)
+        public void Set(int index)
         {
             for (int i = 0; i < targetObjects.Length; i++)
             {
