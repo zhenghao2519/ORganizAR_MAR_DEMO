@@ -20,7 +20,19 @@ public class RemoteUnitySceneCustom : MonoBehaviour
     public List<GameObject> targets = new List<GameObject>();
     public int detectionCount = 10;
     private bool done = false;
-    
+    private int pc_counter = 0;
+    private List<Color> colorList = new List<Color>
+    {
+        Color.red,
+        Color.green,
+        Color.blue,
+        Color.yellow,
+        Color.cyan,
+        Color.magenta,
+        Color.white,
+        Color.gray
+        
+    };
 
     [Tooltip("Set to BasicMaterial to support semi-transparent primitives.")]
     public Material m_material;
@@ -82,6 +94,7 @@ public class RemoteUnitySceneCustom : MonoBehaviour
     }
     uint MSG_CreatePCRenderer()
     {
+        pc_counter += 1;
         GameObject pcPrefab = Resources.Load<GameObject>("PointCloudRenderer");
         GameObject pcInstance = GameObject.Instantiate(pcPrefab, Vector3.zero, Quaternion.identity);
 
@@ -126,7 +139,8 @@ public class RemoteUnitySceneCustom : MonoBehaviour
 
         }
         pointCloudRenderer.Init();
-        pointCloudRenderer.Render(arrVertices, Color.white);
+        Color color = colorList[pc_counter % colorList.Count];
+        pointCloudRenderer.Render(arrVertices, color);
 
         return 1;
     }
