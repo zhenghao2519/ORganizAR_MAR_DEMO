@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics;
+using static UnityEditor.Experimental.AssetDatabaseExperimental.AssetDatabaseCounters;
 
 public class calcTransform : MonoBehaviour
 {
@@ -16,6 +17,7 @@ public class calcTransform : MonoBehaviour
     GameObject srcContainer, dstContainer;
     public bool register = false;
     public float maxDistance = 0.01f;
+    private int counter = 0;
 
     public void Register() {
         register = true;
@@ -29,6 +31,12 @@ public class calcTransform : MonoBehaviour
             Debug.Log("running register");
 
             ComputeAndApplyTransform();
+            counter++;
+            if (counter == 10) {
+                register = false;
+                counter = 0;
+                return;
+            }
             List<Vector3> vecListSrc = srcContainer.GetComponent<PointCloud>().TransVecListUnity();
             List<Vector3> vecListDst = dstContainer.GetComponent<PointCloud>().TransVecListUnity();
             
