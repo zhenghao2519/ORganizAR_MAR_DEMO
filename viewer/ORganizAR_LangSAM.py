@@ -24,6 +24,7 @@ visualization_enabled = False
 write_data = True
 wsl = True
 remote_docker = False
+done_scanning = False
 
 if not remote_docker:
     from pynput import keyboard
@@ -92,7 +93,7 @@ prompts =  ["orange pen", "timer", "phone","keyboard"]
 data = {}
 CLIP_SIM_THRESHOLD = 0.6
 DINO_THRESHOLD = 0.35
-MIN_FRAME_NUM =5 #59  
+MIN_FRAME_NUM = 50 #59  
 enable = True
 
 # unity pc vis secction
@@ -211,6 +212,20 @@ def send_detection(prompt_index: int):
     display_list.send_dino_detection(prompt_index)
     display_list.end_display_list() 
     ipc.push(display_list) 
+
+
+def check_done() :
+   
+    display_list = hl2ss_rus.command_buffer()
+    display_list.begin_display_list() 
+    display_list.check_done()
+    display_list.end_display_list() # End sequence
+    ipc.push(display_list) # Send commands to server
+    res = ipc.pull(display_list) # Get results from server
+    print("res: ",res)
+    return res
+
+
 
 def apply_clip_batch(prompt, max_results, threshold_percentage):
     prompt_data = data[prompt]
@@ -445,7 +460,7 @@ if __name__ == '__main__':
                         'boxes': embedded_cropped_box_data
                     }
 
-        if counter >= MIN_FRAME_NUM: #TODO need to find better integration, e.g. UI for room scan complete then stop receiving data,already run inference before async
+        if (counter >= MIN_FRAME_NUM) or (2 in check_done()): #TODO need to find better integration, e.g. UI for room scan complete then stop receiving data,already run inference before async
             
             for index, prompt in enumerate(data.keys()):
                 print(prompt)

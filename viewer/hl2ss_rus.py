@@ -80,3 +80,6 @@ class command_buffer(hl2ss.umq_command_buffer):
     def send_dino_detection(self, type):
         self.add(22, struct.pack('<I', type))
 
+    def check_done(self):
+        self.add(23, b'')
+

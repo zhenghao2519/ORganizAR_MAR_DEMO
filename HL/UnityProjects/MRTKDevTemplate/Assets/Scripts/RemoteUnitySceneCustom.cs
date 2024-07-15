@@ -18,6 +18,7 @@ public class RemoteUnitySceneCustom : MonoBehaviour
     private int m_last_key;
     public List<GameObject> targets = new List<GameObject>();
     public int detectionCount = 10;
+    private bool done = false;
     
 
     [Tooltip("Set to BasicMaterial to support semi-transparent primitives.")]
@@ -70,11 +71,28 @@ public class RemoteUnitySceneCustom : MonoBehaviour
             case 20: ret = MSG_SetTargetMode(data); break;
             case 21: ret = MSG_SpawnArrow(data); break;
             case 22: ret = MSG_ReceiveDetection(data); break;
+            case 23: ret = MSG_CheckDone(); break;
             case ~0U: ret = MSG_Disconnect(data); break;
         }
 
         return ret;
     }
+
+    public void SetDone() {
+        done = true;
+    }
+    uint MSG_CheckDone()
+    {
+        if (done)
+        {
+            return 2;
+        }
+        else {
+            return 0;
+        } 
+    }
+
+
     uint MSG_ReceiveDetection(byte[] data)
     {
         if (data.Length < 4) { return 0; }
