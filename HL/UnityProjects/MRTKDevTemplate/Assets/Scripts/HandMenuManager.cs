@@ -13,6 +13,7 @@ public class HandMenuManager : MonoBehaviour
     private bool scanComplete = false;
     private bool findBedComplete = false;
     private bool selectSetUpComplete = false;
+    private bool aiComplete = false;
     public List<GameObject> handMenus = new List<GameObject>();
     // Start is called before the first frame update
     void Start()
@@ -24,6 +25,19 @@ public class HandMenuManager : MonoBehaviour
     void Update()
     {
         
+    }
+    public void AIDone()
+    {
+        if (!aiComplete)
+        {
+
+            aiComplete = true;
+            currentHandMenu++;
+            Debug.Log("aiComplete Complete");
+            ToggleHandMenus(currentHandMenu);
+        }
+
+
     }
     public void SelectSetUpComplete()
     {

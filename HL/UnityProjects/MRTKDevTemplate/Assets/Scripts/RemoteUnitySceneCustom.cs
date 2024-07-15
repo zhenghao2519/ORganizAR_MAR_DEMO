@@ -21,6 +21,8 @@ public class RemoteUnitySceneCustom : MonoBehaviour
     public int detectionCount = 10;
     private bool done = false;
     private int pc_counter = 0;
+    public bool AIDone = false;
+    public HandMenuManager HandMenuManager;
     private List<Color> colorList = new List<Color>
     {
         Color.red,
@@ -49,8 +51,14 @@ public class RemoteUnitySceneCustom : MonoBehaviour
     void Update()
     {
         while (GetMessage() && m_loop) ;
+        if (AIDone)
+        {
+            AIDone = false; //for debugging
+            HandMenuManager.AIDone();
+        }
     }
 
+  
     bool GetMessage()
     {
         uint command;
@@ -141,7 +149,11 @@ public class RemoteUnitySceneCustom : MonoBehaviour
         pointCloudRenderer.Init();
         Color color = colorList[pc_counter % colorList.Count];
         pointCloudRenderer.Render(arrVertices, color);
-
+        if (pc_counter == targets.Count) {
+            AIDone = true;
+            
+        }
+       
         return 1;
     }
 
