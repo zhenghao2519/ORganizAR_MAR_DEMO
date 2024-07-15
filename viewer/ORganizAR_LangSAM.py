@@ -497,7 +497,7 @@ if __name__ == '__main__':
                     continue
                 if from_recording == False:
                     #results = display_point_cloud(data[prompt]["point_cloud"],index ) #get bbox using open3d, create cube over bbox with outline shader, maybe add arrow TODO
-                    #results = display_centroid(data[prompt]["point_cloud"],index )
+                    results = display_centroid(data[prompt]["point_cloud"],index )
                     results_pc = display_point_cloud(data[prompt]["point_cloud"],index )
                     
             
