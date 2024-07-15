@@ -83,3 +83,11 @@ class command_buffer(hl2ss.umq_command_buffer):
     def check_done(self):
         self.add(23, b'')
 
+    def create_point_cloud_renderer(self):
+        self.add(24, b'')
+
+    def send_point_cloud(self,len, point_cloud):
+        self.add(25, struct.pack('<I', len)+ point_cloud.tobytes())
+
+
+

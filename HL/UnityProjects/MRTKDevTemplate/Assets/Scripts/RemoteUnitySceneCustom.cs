@@ -7,6 +7,7 @@ using TMPro;
 using MixedReality.Toolkit.Audio;
 using MixedReality.Toolkit.Examples;
 using UnityEngine.WSA;
+using UnityEngine.UIElements;
 
 public class RemoteUnitySceneCustom : MonoBehaviour
 {
@@ -69,13 +70,65 @@ public class RemoteUnitySceneCustom : MonoBehaviour
             case 18: ret = MSG_BeginDisplayList(data); break;
             case 19: ret = MSG_EndDisplayList(data); break;
             case 20: ret = MSG_SetTargetMode(data); break;
-            case 21: ret = MSG_SpawnArrow(data); break;
+            case 21: ret = MSG_SpawnArrow(); break;
             case 22: ret = MSG_ReceiveDetection(data); break;
             case 23: ret = MSG_CheckDone(); break;
+            case 24: ret = MSG_CreatePCRenderer(); break;
+            case 25: ret = MSG_SetPointCloud(data); break;
             case ~0U: ret = MSG_Disconnect(data); break;
         }
 
         return ret;
+    }
+    uint MSG_CreatePCRenderer()
+    {
+        GameObject pcPrefab = Resources.Load<GameObject>("PointCloudRenderer");
+        GameObject pcInstance = GameObject.Instantiate(pcPrefab, Vector3.zero, Quaternion.identity);
+
+        // Set initial visibility of the arrow
+        Renderer pcRenderer = pcInstance.GetComponent<Renderer>();
+        if (pcRenderer != null)
+        {
+            pcRenderer.enabled = true;
+        }
+        return AddGameObject(pcInstance);
+    }
+
+
+    uint MSG_SetPointCloud(byte[] data)
+    {
+        if (data.Length < 4) { return 0; }
+
+        GameObject go;
+        //mode last no key used
+        if (!m_remote_objects.TryGetValue(GetKey(data), out go)) { return 0; }
+
+        PointCloudRenderer pointCloudRenderer = go.GetComponent<PointCloudRenderer>();
+        // first el is len
+        int nPoints = BitConverter.ToInt32(data, 0);
+        Vector3[] arrVertices = new Vector3[nPoints];
+        
+
+        if (data.Length > 4)
+        {
+            byte[] pointsInBytes = new byte[data.Length - 4];
+            Array.Copy(data, 4, pointsInBytes, 0, pointsInBytes.Length); //probably not needed just use offset below
+
+
+            int floatSize = 4; // Size of a float in bytes
+            for (int i = 0; i < nPoints; ++i)
+            {
+                float x = BitConverter.ToSingle(pointsInBytes, i * 3 * floatSize);
+                float y = BitConverter.ToSingle(pointsInBytes, i * 3 * floatSize + floatSize);
+                float z = BitConverter.ToSingle(pointsInBytes, i * 3 * floatSize + 2 * floatSize);
+                arrVertices[i] = new Vector3(x, y, z);
+            }
+
+        }
+        pointCloudRenderer.Init();
+        pointCloudRenderer.Render(arrVertices, Color.white);
+
+        return 1;
     }
 
     public void SetDone() {
@@ -109,7 +162,7 @@ public class RemoteUnitySceneCustom : MonoBehaviour
         
     }
 
-    uint MSG_SpawnArrow(byte[] data)
+    uint MSG_SpawnArrow()
     {
         GameObject arrowPrefab = Resources.Load<GameObject>("3D RightArrow");
         GameObject arrowInstance = GameObject.Instantiate(arrowPrefab, Vector3.zero, Quaternion.identity);

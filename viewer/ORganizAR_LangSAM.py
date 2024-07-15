@@ -89,7 +89,7 @@ image_pil_bed = Image.open(bed_image_path)
 #prompts = [carm,us,shelf,table]
 images = [image_pil_timer,image_pil_bed]
 #prompts = ["C-arm machine, characterized both by its distinctive C-shaped arm which houses an X-ray source and detector and it's connected control unit with various dials, buttons. White and grey in color.","The ultrasound machine tower is characterized by a large monitor on top, a console with numerous buttons and knobs, and a wheeled base. The machine is predominantly white with grey accents. Also there are fleshlight shaped ultrasound probes attached to it's sides","medical equipment cart, It has multiple shelves, a handle on top, and is predominantly grey with some blue sections. The cart has nothing on top; it is empty.","table in the center of the room with a light-blue cloth"]
-prompts =  ["orange pen", "timer", "phone","keyboard"]
+prompts =  ["orange pen", "phone","keyboard","timer"]
 data = {}
 CLIP_SIM_THRESHOLD = 0.6
 DINO_THRESHOLD = 0.35
@@ -156,6 +156,7 @@ def clip_calculate_similarity(prompt_embedding: torch.Tensor, image_embeddings: 
     """
     similariries = prompt_embedding @ image_embeddings.T
     return similariries
+
 def display_point_cloud(points: np.ndarray, prompt_index: int) -> np.ndarray:
     """
     Displays a subsampled point cloud in a Unity scene as small red quads.
@@ -166,25 +167,32 @@ def display_point_cloud(points: np.ndarray, prompt_index: int) -> np.ndarray:
     Returns:
     - Array containing the results from the server after pushing commands.
     """
-    # Add quad to Unity scene
+    points[:, 2] = -points[:, 2] #unity coordinate system
     display_list = hl2ss_rus.command_buffer()
     display_list.begin_display_list() # Begin sequence
     # Check if subsampling is needed
-    num_of_quads_per_object = total_quad_count// len (data.keys())
-    offset = prompt_index*num_of_quads_per_object
-    if len(points) >= num_of_quads_per_object:
-        points = points[np.random.choice(len(points), num_of_quads_per_object, replace=False)]
+    max_chunk_size = 65535
+    print(prompt_index,len(points))
+    if len(points) >= max_chunk_size:
+        points = points[np.random.choice(len(points), 65535, replace=False)]
     
-    
-    for index, point in enumerate(points):
-        point[2] = -point[2] #unity is lefthanded
-        display_list.set_target_mode(0) # default target mode by key
-        display_list.set_world_transform(keys[index+offset], point, [0, 0, 0, 1], sphere_scale) # Set the quad's world transform
-        display_list.set_active(keys[index+offset], 1) # Make the quad visible
-
+    # Add quad to Unity scene
+    display_list = hl2ss_rus.command_buffer()
+    display_list.begin_display_list() # Begin sequence
+    display_list.create_point_cloud_renderer() 
+    # we use last, key not need, instead communicate which target it is with prompt_index, and the pc len
+    display_list.set_target_mode(hl2ss_rus.TargetMode.UseLast) # Set server to use the last created object as target (this avoids waiting for the id) 
+    display_list.set_world_transform(prompt_index, [0, 0, 0], [0, 0, 0, 1], [1,1, 1]) # Set the quad's world transform 
+    display_list.send_point_cloud(len(points), points) # Set the quad's texture
+    display_list.set_active(prompt_index, 1) # Make the quad visible
+    display_list.set_target_mode(hl2ss_rus.TargetMode.UseID) # Restore target mode
     display_list.end_display_list() # End sequence
     ipc.push(display_list) # Send commands to server
-    return ipc.pull(display_list) # Get results from server
+    results = ipc.pull(display_list) # Get results from server
+    
+    return results
+
+
 
 def display_centroid(points: np.ndarray, prompt_index: int) -> np.ndarray:
     
@@ -222,7 +230,7 @@ def check_done() :
     display_list.end_display_list() # End sequence
     ipc.push(display_list) # Send commands to server
     res = ipc.pull(display_list) # Get results from server
-    print("res: ",res)
+    #print("res: ",res)
     return res
 
 
@@ -393,6 +401,7 @@ if __name__ == '__main__':
 
 
     start_time = time.time()
+
     # Main Loop ---------------------------------------------------------------
     counter = 0
     while (enable):
@@ -488,7 +497,8 @@ if __name__ == '__main__':
                     continue
                 if from_recording == False:
                     #results = display_point_cloud(data[prompt]["point_cloud"],index ) #get bbox using open3d, create cube over bbox with outline shader, maybe add arrow TODO
-                    results = display_centroid(data[prompt]["point_cloud"],index )
+                    #results = display_centroid(data[prompt]["point_cloud"],index )
+                    results_pc = display_point_cloud(data[prompt]["point_cloud"],index )
                     
             
             break
