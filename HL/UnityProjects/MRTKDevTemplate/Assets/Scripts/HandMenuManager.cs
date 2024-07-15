@@ -11,6 +11,8 @@ public class HandMenuManager : MonoBehaviour
 
     private int currentHandMenu = 0;
     private bool scanComplete = false;
+    private bool findBedComplete = false;
+    private bool selectSetUpComplete = false;
     public List<GameObject> handMenus = new List<GameObject>();
     // Start is called before the first frame update
     void Start()
@@ -23,6 +25,35 @@ public class HandMenuManager : MonoBehaviour
     {
         
     }
+    public void SelectSetUpComplete()
+    {
+        if (!selectSetUpComplete)
+        {
+
+            findBedComplete = true;
+            currentHandMenu++;
+            Debug.Log("setup Complete");
+            ToggleHandMenus(currentHandMenu);
+        }
+
+
+    }
+
+    public void FindBedDone()
+    {
+        if (!findBedComplete)
+        {
+         
+            findBedComplete = true;
+            currentHandMenu++;
+            Debug.Log("find bed Complete");
+            ToggleHandMenus(currentHandMenu);
+        }
+
+
+    }
+
+
 
     public void ScanDone() {
         if (!scanComplete) {

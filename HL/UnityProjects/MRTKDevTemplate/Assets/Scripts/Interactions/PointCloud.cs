@@ -60,13 +60,16 @@ public class PointCloud  : MonoBehaviour
     public List<Vector<double>> TransVecList()
     {
         List<Vector<double>> vecList = new List<Vector<double>>();
-        foreach (Transform fidsTrans in this.GetComponentInChildren<Transform>())
+        foreach (Transform fidsTrans in this.GetComponentsInChildren<Transform>())
         {
-            Vector<double> tmpVec = Vector<double>.Build.Dense(3);
-            tmpVec[0] = fidsTrans.position.x;
-            tmpVec[1] = fidsTrans.position.y;
-            tmpVec[2] = fidsTrans.position.z;
-            vecList.Add(tmpVec);
+            if (fidsTrans.name.Contains("Sphere"))
+            {
+                Vector<double> tmpVec = Vector<double>.Build.Dense(3);
+                tmpVec[0] = fidsTrans.position.x;
+                tmpVec[1] = fidsTrans.position.y;
+                tmpVec[2] = fidsTrans.position.z;
+                vecList.Add(tmpVec);
+            }
         }
         return vecList;
     }
@@ -76,9 +79,13 @@ public class PointCloud  : MonoBehaviour
         List<Vector3> vecList = new List<Vector3>();
         foreach (Transform childTransform in transform)
         {
-            vecList.Add(childTransform.position);
+            if (childTransform.name.Contains("Sphere"))
+            {
+                vecList.Add(childTransform.position);
+            }
         }
         return vecList;
     }
+
 
 }
