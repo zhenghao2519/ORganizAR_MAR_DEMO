@@ -1,7 +1,7 @@
-
 import time
 import numpy as np
 import cv2
+# from pynput import keyboard
 import multiprocessing as mp
 import open3d as o3d
 import hl2ss
@@ -11,32 +11,54 @@ import hl2ss_3dcv
 import hl2ss_io
 import hl2ss_rus
 import view_manager
-from typing import List, Tuple, Any, Dict,Callable
+from typing import List, Tuple, Any, Dict, Callable
 from lang_sam import LangSAM
 import PIL
 from PIL import Image
 import torch
 import clip
-import time
+import os
+import open3d.core as o3c
+import pdb
+from tqdm import tqdm
+import sys
+import pandas as pd
+
+from faster_haoyang import PromptBoxManager
+from utils import project_2d_to_3d_single_frame, aggregate, filter
+
+from path_planning.path_planning import get_floor_grid, rotation_matrix_from_vectors
+from path_planning.path_planning import get_z_norm_of_plane, get_floor_mean
+from path_planning.path_planning import astar, get_object_grid_coordinates
+from path_planning.path_planning import get_starting_point
+
 # Settings --------------------------------------------------------------------
-from_recording = False #set to run live on HL vs from recorded dataset
+log_file_path = "./log.txt"
+#sys.stdout = open(log_file_path,"w",buffering=1,encoding='utf-8')
+
+from_recording = False # set to run live on HL vs from recorded dataset
 visualization_enabled = False
 write_data = True
 wsl = True
 remote_docker = False
-done_scanning = False
+Alienware = False
+reconstruct_point_cloud = True
+visualize_reconstruction = False
 
-if not remote_docker:
-    from pynput import keyboard
-    
-    
+inference_done = False
+
+
 if wsl:
     visualization_enabled = False
     path_start = "/mnt/c/Users/Marc/Desktop/CS/MARPROJECT/"
 elif remote_docker:
-    path_start = "/medar_smart/ORganizAR/"
+    path_start = "/medar_smart/"
+elif Alienware:
+    path_start = "/data/projects/medar_smart/ORganizAR/"
+    print("start path: ", path_start)
 else:
-    path_start = "C:/Users/Marc/Desktop/CS/MARPROJECT/"
+    path_start = "/Users/haoyangsun/Documents/ORganizAR/"
+    print("start path: ", path_start)
 
 # HoloLens address
 host = '192.168.0.101'
@@ -44,11 +66,19 @@ host = '192.168.0.101'
 # Directory containing the recorded data
 path = path_start + 'viewer/data'
 
+df = pd.read_csv(path+"/rm_depth_longthrow.csv")
+stop_num_frames = 60
+sample_frequency = 3 #df.shape[0] // stop_num_frames #dataset1: 5   dataset2: 2
 # Directory containing the calibration data of the HoloLens
 calibration_path: str = path_start + 'calibration/rm_depth_longthrow/'
 
-#rgb images from recorded data
-write_data_path = "viewer/data/debug_save/"
+point_cloud_path: str = path + '/point_cloud_recon.pcd'
+mask_path: str = path + 'seg_mask.pth'
+
+# rgb images from recorded data
+write_data_path = "viewer/data/debug_faster42/"
+if os.path.exists(path_start + write_data_path) == False:
+    os.makedirs(path_start + write_data_path)
 
 # Camera parameters
 pv_width = 640
@@ -59,73 +89,101 @@ pv_framerate = 30
 buffer_length = 10
 
 # Integration parameters
-voxel_length = 1/100
+voxel_length = 1 / 100
 sdf_trunc = 0.04
-max_depth = 7 #3.0 in sample, changed to room size
+max_depth = 7  # 3.0 in sample, changed to room size
 
-model_LangSAM = LangSAM()
+
+
+
+
 
 # Semantic search setup
-device_search = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model_clip, preprocess_clip = clip.load("ViT-B/32", device=device_search)
-model_clip = model_clip.to(device_search)
+device_search = torch.device("cuda:0" if torch.cuda.is_available() else "mps")
+o3d_device = o3d.core.Device("CUDA:0" if torch.cuda.is_available() else "CPU:0")
+print("using device: ", o3d_device, " for reconstruction")
 
 # Test data setup
-if remote_docker:
-    timer_image_path = "/medar_smart/ORganizAR/viewer/test_timer.png"
-    bed_image_path = "/medar_smart/ORganizAR/viewer/test_bed.png"
-else:
-    timer_image_path = "/mnt/c/Users/Marc/Desktop/CS/MARPROJECT/viewer/test_timer.png"
-    bed_image_path = "/mnt/c/Users/Marc/Desktop/CS/MARPROJECT/viewer/test_bed.png"
-    
-image_pil_timer = Image.open(timer_image_path)
-image_pil_bed = Image.open(bed_image_path)
-# carm = "C-arm machine, characterized by its distinctive C-shaped arm which houses an X-ray source and detector connected to a base"
-# us = "The ultrasound machine, is characterized by a large monitor on top, also there are fleshlight shaped ultrasound probes attached to it's sides"
-# shelf = "shelf"
-# table = "table in the center of the room with a light-blue cloth with human dummy doll"
+image_pil_timer = Image.open(path_start + "viewer/test_timer.png")
+image_pil_bed = Image.open(path_start + "/viewer/test_bed.png")
+# prompts_lookup = [ 
+#     "table with a light-blue cloth",
+#     "medical equipment cart, has multiple shelves, a handle on top, and is grey with some blue sections",
+#     "c arm machine, has its distinctive c shaped arm which houses an X-ray source and detector and connected control unit with dials and buttons",
+#     # "backpack",
+#     "The ultrasound machine tower with a large monitor on top" ,#  a console with buttons and knobs, it is white with grey accents",
+#     "chair",
+#     # "monitor"
+#     ]
+# prompts_lookup = [ 
+#     "table with a light-blue cloth",
+#     "medical equipment cart, has multiple shelves, a handle on top, and is grey with some blue sections",
+#     "c arm machine, has its distinctive c shaped arm and it is connected control unit with dials and buttons",
+#     "backpack",
+#     "The ultrasound machine tower has a large monitor on top, a console with buttons and knobs, it is white with grey accents",
+#     "chair",
+#     "monitor"
+#     ]
 
-#encode images using clip lower sims, shoudl we use the same prompt for clip grounding different, set up testing all datasets
-#prompts = [carm,us,shelf,table]
-images = [image_pil_timer,image_pil_bed]
-#prompts = ["C-arm machine, characterized both by its distinctive C-shaped arm which houses an X-ray source and detector and it's connected control unit with various dials, buttons. White and grey in color.","The ultrasound machine tower is characterized by a large monitor on top, a console with numerous buttons and knobs, and a wheeled base. The machine is predominantly white with grey accents. Also there are fleshlight shaped ultrasound probes attached to it's sides","medical equipment cart, It has multiple shelves, a handle on top, and is predominantly grey with some blue sections. The cart has nothing on top; it is empty.","table in the center of the room with a light-blue cloth"]
-prompts =  ["orange pen", "phone","timer"]
+#___________________________________________________________________________________
+# prompts_lookup = ["bed with a dummy on it","a grey shelf with a pole on it",
+#                   "c arm machine, which is a medical machine with a large c shaped metal arm",
+#                   "backpack"," ultra sound machine with a monitor on it","chair","monitor"]
+#___________________________________________________________________________________________________________
+prompts_lookup = ["timer","keyboard","monitors"]
+# prompts_lookup = ["table with a light-blue cloth","a grey shelf with a pole on it","c arm machine, which is a medical machine with a large c shaped metal arm and its connected control unit with dials and buttons","backpack"," ultra sound machine, a console with buttons and knobs, it is white with grey accents","chair"]
+
+#prompts_lookup = ["table with a light-blue cloth","bed","a grey shelf with a pole on it","c arm, which is a medical machine with a large c shaped metal arm","backpack"," ultra sound machine with a monitor on it","chair","monitor"]
+#prompts_lookup = ["A table with cloth on it","bed","a grey shelf with a pole on it","c arm, which is a medical machine with a large c shaped metal arm","backpack"," ultra sound machine, that has flashlight shape probe attached and a machine tower","chair","computer monitor"]
+prompts = [". ".join(prompts_lookup)]
+
+
+# prompts = ["C-Arm, which has a large C-shaped arm and machine tower"]
+# prompts = ["C Arm", "Ultrasound Machine", "Laparoscopic Tower", "Chairs", "Table with cloth", "Patient Bed"]#["timer","bed","monitors", "orange pen", "keyboard"]
+
+
+boxManager = PromptBoxManager(prompts, prompts_lookup)
+
+images = [image_pil_timer, image_pil_bed]
+
 data = {}
-CLIP_SIM_THRESHOLD = 0.6
-DINO_THRESHOLD = 0.35
-MIN_FRAME_NUM = 50 #59  
+# CLIP_SIM_THRESHOLD = 0.25
+# DINO_THRESHOLD = 0.3
+# MIN_FRAME_NUM = 5
 enable = True
 
-# unity pc vis secction
+# unity pc vis secctiond
 # quad scale in meters
 quad_scale: List[float] = [0.005, 0.005, 0.005]
 sphere_scale: List[float] = [0.001, 0.001, 0.001]
 arrow_scale : List[float] = [7, 7, 7]
-total_quad_count: int = 500 
+total_quad_count: int = 500
 
-def get_boxes(image, prompt, box_threshold=0.3, text_threshold=0.25):
-    boxes, logits, phrases = model_LangSAM.predict_dino(image, prompt, box_threshold, text_threshold)
-    return boxes, logits, phrases
-def crop_image(image_pil, box):
-    left, upper, right, lower = [int(coordinate.item()) for coordinate in box]
-    cropped_image = image_pil.crop((left, upper, right, lower))
-    return cropped_image
-def apply_clip_embedding_image(image):
-    #query_image = preprocess_clip(image).unsqueeze(0).to(device_search)
-    query_image = preprocess_clip(image).to(device_search)
-    return query_image
+
+if reconstruct_point_cloud:
+    volume = o3d.pipelines.integration.ScalableTSDFVolume(voxel_length=voxel_length, sdf_trunc=sdf_trunc,
+                                                    color_type=o3d.pipelines.integration.TSDFVolumeColorType.RGB8)
+    # vbg = o3d.t.geometry.VoxelBlockGrid(attr_names=('tsdf', 'weight'),
+    #                                         attr_dtypes=(o3c.float32,
+    #                                                      o3c.float32),
+    #                                         attr_channels=((1), (1)),
+    #                                         voxel_size=3.0 / 512,
+    #                                         block_resolution=16,
+    #                                         block_count=50000,
+    #                                         device=o3d_device)
+    print("created volume")
+    #initialize visualizer
+    print("initializing visualizer")
+    if visualize_reconstruction:
+        recon_vis = o3d.visualization.Visualizer()
+        recon_vis.create_window()
+        print("initialized visualizer")
+
 def apply_clip_embedding_prompt(prompt):
     text = clip.tokenize([prompt]).to(device_search)
-    return text   
-def get_mask(image, boxes):
-    masks = model_LangSAM.predict_sam(image, boxes)
-    masks = masks.squeeze(1)
-    masks_np = [mask.cpu().detach().numpy() for mask in masks] 
-    masks_np = [(mask * 255).astype(np.uint8) for mask in masks_np]  
-    combined_mask = np.zeros(masks_np[0].shape, dtype=np.uint8)
-    for mask in masks_np:
-        combined_mask = np.maximum(combined_mask, mask)
-    return combined_mask
+    return text
+
+
 def set_up_data_struct(prompts):
     data = {}
     for prompt in prompts:
@@ -133,29 +191,8 @@ def set_up_data_struct(prompts):
         data[prompt] = {
             'tokenized_prompt': tokenized_prompt,
             'frames': {}  # This will store information per frame, to be populated later
-        }   
+        }
     return data
-def apply_clip_one_img(image, prompt):
-    with torch.no_grad():
-        #logits_per_image, logits_per_text = model_clip(image, prompt)
-        #probs = logits_per_image.softmax(dim=-1).cpu().numpy()
-        logits_per_image, _ = model_clip(image, prompt)  # tensor([[22.3750]], device='cuda:0', dtype=torch.float16)
-        logits_value = logits_per_image.cpu().numpy()
-        normalized_logits = (logits_value + 100) / 200
-        return normalized_logits
-def clip_calculate_similarity(prompt_embedding: torch.Tensor, image_embeddings: torch.Tensor) -> torch.Tensor:
-    """
-    Calculates the similarity between prompt embedding and image embeddings.
-
-    Args:
-    - prompt_embedding: Tensor containing embedding of the text prompt e.g. "right monitor" or "yellow bell pepper etc".
-    - image_embeddings: Tensor containing embeddings of the images of the users environment.
-
-    Returns:
-    - Tensor containing the similarities between prompt and image embeddings.
-    """
-    similariries = prompt_embedding @ image_embeddings.T
-    return similariries
 
 def display_point_cloud(points: np.ndarray, prompt_index: int) -> np.ndarray:
     """
@@ -173,6 +210,8 @@ def display_point_cloud(points: np.ndarray, prompt_index: int) -> np.ndarray:
     # Check if subsampling is needed
     max_chunk_size = 65535
     print(prompt_index,len(points))
+    print(points)
+
     if len(points) >= max_chunk_size:
         points = points[np.random.choice(len(points), 65535, replace=False)]
     
@@ -182,14 +221,14 @@ def display_point_cloud(points: np.ndarray, prompt_index: int) -> np.ndarray:
     display_list.create_point_cloud_renderer() 
     # we use last, key not need, instead communicate which target it is with prompt_index, and the pc len
     display_list.set_target_mode(hl2ss_rus.TargetMode.UseLast) # Set server to use the last created object as target (this avoids waiting for the id) 
-    display_list.set_world_transform(prompt_index, [0, 0, 0], [0, 0, 0, 1], [1,1, 1]) # Set the quad's world transform 
+    display_list.set_world_transform(0, [0, 0, 0], [0, 0, 0, 1], [1,1, 1]) # Set the quad's world transform 
     display_list.send_point_cloud(len(points), points) # Set the quad's texture
-    display_list.set_active(prompt_index, 1) # Make the quad visible
+    display_list.set_active(0, 1) # Make the quad visible
     display_list.set_target_mode(hl2ss_rus.TargetMode.UseID) # Restore target mode
     display_list.end_display_list() # End sequence
     ipc.push(display_list) # Send commands to server
     results = ipc.pull(display_list) # Get results from server
-    
+    print(results)
     return results
 
 
@@ -214,12 +253,7 @@ def display_centroid(points: np.ndarray, prompt_index: int) -> np.ndarray:
     ipc.push(display_list) # Send commands to server
 
     return ipc.pull(display_list) # Get results from server
-def send_detection(prompt_index: int):
-    display_list = hl2ss_rus.command_buffer()
-    display_list.begin_display_list() 
-    display_list.send_dino_detection(prompt_index)
-    display_list.end_display_list() 
-    ipc.push(display_list) 
+ 
 
 
 def check_done() :
@@ -233,58 +267,13 @@ def check_done() :
     #print("res: ",res)
     return res
 
-
-
-def apply_clip_batch(prompt, max_results, threshold_percentage):
-    prompt_data = data[prompt]
-    query_tokens = prompt_data["tokenized_prompt"]
-    with torch.no_grad():
-        prompt_embedding = model_clip.encode_text(query_tokens)
-
-    image_embeddings = []
-    box_references = []  
-    for _, frame_data in prompt_data['frames'].items():
-        for box_data in frame_data['boxes']:
-            logit = box_data['logit']
-            box_data['top_result'] = False  
-            box_data['sim_score'] = None
-            if logit > DINO_THRESHOLD:
-                clip_embedded_img = box_data['embedding']
-                image_embeddings.append(clip_embedded_img)
-                box_references.append(box_data)
-    if(len(image_embeddings)== 0):
-        return
-    with torch.no_grad():
-        image_embeddings = model_clip.encode_image(torch.stack(image_embeddings))
-    sim = clip_calculate_similarity(prompt_embedding, image_embeddings)[0]
-    print("sim")
-    print(sim)
-    if(len(sim)> 0):
-        for box_data, score in zip(box_references, sim):
-            box_data['sim_score'] = score.item()
-        box_references.sort(key=lambda x: x['sim_score'], reverse=True)
-        top_result_score = box_references[0]['sim_score']
-        print("topscore:")
-        print(top_result_score)
-
-        for _, frame_data in prompt_data['frames'].items():
-            threshold_score = top_result_score - (top_result_score * threshold_percentage) #TODO filter also based on detection rate
-            for box_data in box_references:
-                print(box_data['sim_score'])
-                if box_data['sim_score'] and box_data['sim_score'] >= threshold_score:
-                    box_data['top_result'] = True
-                # Limit to the maximum results specified
-                max_results -= 1
-                if max_results <= 0:
-                    break
-            if max_results <= 0:
-                break
 def on_press(key):
-        global enable
-        enable = key != keyboard.Key.space
-        return enable
-def get_segmented_points(box_data,lt_scale,max_depth,xy1,calibration_lt):
-    
+    global enable
+    enable = key != keyboard.Key.esc
+    return enable
+
+
+def get_segmented_points(box_data, lt_scale, max_depth, xy1, calibration_lt):
     data_depth = box_data["data_depth"]
     data_pv = box_data["data_pv"]
     mask = box_data["combined_mask"]
@@ -300,59 +289,46 @@ def get_segmented_points(box_data,lt_scale,max_depth,xy1,calibration_lt):
     depth[depth > max_depth] = 0
 
     points = hl2ss_3dcv.rm_depth_to_points(depth, xy1)
-    depth_to_world = hl2ss_3dcv.camera_to_rignode(calibration_lt.extrinsics) @ hl2ss_3dcv.reference_to_world(data_depth.pose)
+    depth_to_world = hl2ss_3dcv.camera_to_rignode(calibration_lt.extrinsics) @ hl2ss_3dcv.reference_to_world(
+        data_depth.pose)
     points = hl2ss_3dcv.transform(points, depth_to_world)
 
     # Project pointcloud image --------------------------------------------
-    world_to_image = hl2ss_3dcv.world_to_reference(data_pv.pose) @ hl2ss_3dcv.rignode_to_camera(pv_extrinsics) @ hl2ss_3dcv.camera_to_image(pv_intrinsics)
+    world_to_image = hl2ss_3dcv.world_to_reference(data_pv.pose) @ hl2ss_3dcv.rignode_to_camera(
+        pv_extrinsics) @ hl2ss_3dcv.camera_to_image(pv_intrinsics)
     pixels = hl2ss_3dcv.project(points, world_to_image)
-    
+
     map_u = pixels[:, :, 0]
     map_v = pixels[:, :, 1]
 
     # Get 3D points labels -------------------------------------
-    labels = cv2.remap(mask, map_u, map_v, cv2.INTER_NEAREST, borderMode=cv2.BORDER_CONSTANT, borderValue=0) #pixels outside to 0
+    labels = cv2.remap(mask, map_u, map_v, cv2.INTER_NEAREST, borderMode=cv2.BORDER_CONSTANT,
+                       borderValue=0)  # pixels outside to 0
     points_mask = labels == 255
     return points[points_mask]
-def instantiate_gos(ipc: hl2ss.ipc_umq) -> np.ndarray:
-    """
-    Instantiates quads on the server and returns their IDs.
-
-    Args:
-    - ipc: The interprocess communication object.
-
-    Returns:
-    - An array containing the IDs of the instantiated quads so we can later change their transforms, toggle their visibility etc.
-    """
-    global total_quad_count
-    display_list = hl2ss_rus.command_buffer()
-    display_list.begin_display_list() # Begin command sequence
-    display_list.remove_all()# Remove all objects that were created remotely 
-    for i in range(total_quad_count):
-        display_list.create_primitive(hl2ss_rus.PrimitiveType.Sphere) # Create a quad, server will return its id
-    display_list.end_display_list() # End command sequence
-    ipc.push(display_list) # Send commands to server
-    results = ipc.pull(display_list) # Get results from server
-    return results #ids
 
 if __name__ == '__main__':
-    if not remote_docker:
-        # Keyboard events ---------------------------------------------------------
-        enable = True
-        listener = keyboard.Listener(on_press=on_press)
-        listener.start()
+    # Keyboard events ---------------------------------------------------------
+    enable = True
+    # listener = keyboard.Listener(on_press=on_press)
+    # listener.start()
+
+    initial_transform = np.empty(0)
 
     if from_recording:
         # Create readers --------------------------------------------------------------
-        rd_lt = hl2ss_io.create_rd(f'{path}/{hl2ss.get_port_name(hl2ss.StreamPort.RM_DEPTH_LONGTHROW)}.bin', hl2ss.ChunkSize.SINGLE_TRANSFER, True)
-        rd_pv = hl2ss_io.sequencer(f'{path}/{hl2ss.get_port_name(hl2ss.StreamPort.PERSONAL_VIDEO)}.bin', hl2ss.ChunkSize.SINGLE_TRANSFER, 'bgr24')
+        rd_lt = hl2ss_io.create_rd(f'{path}/{hl2ss.get_port_name(hl2ss.StreamPort.RM_DEPTH_LONGTHROW)}.bin',
+                                   hl2ss.ChunkSize.SINGLE_TRANSFER, True)
+        rd_pv = hl2ss_io.sequencer(f'{path}/{hl2ss.get_port_name(hl2ss.StreamPort.PERSONAL_VIDEO)}.bin',
+                                   hl2ss.ChunkSize.SINGLE_TRANSFER, 'bgr24')
 
         # Open readers ----------------------------------------------------------------
         rd_lt.open()
         rd_pv.open()
 
         calibration_lt = hl2ss_3dcv._load_calibration_rm_depth_longthrow(calibration_path)
-        uv2xy = hl2ss_3dcv.compute_uv2xy(calibration_lt.intrinsics, hl2ss.Parameters_RM_DEPTH_LONGTHROW.WIDTH, hl2ss.Parameters_RM_DEPTH_LONGTHROW.HEIGHT)
+        uv2xy = hl2ss_3dcv.compute_uv2xy(calibration_lt.intrinsics, hl2ss.Parameters_RM_DEPTH_LONGTHROW.WIDTH,
+                                         hl2ss.Parameters_RM_DEPTH_LONGTHROW.HEIGHT)
         xy1, depth_scale = hl2ss_3dcv.rm_depth_compute_rays(uv2xy, calibration_lt.scale)
     else:
         # Start PV Subsystem ------------------------------------------------------
@@ -362,14 +338,19 @@ if __name__ == '__main__':
         # Calibration data will be downloaded if it's not in the calibration folder
         calibration_lt = hl2ss_3dcv.get_calibration_rm(host, hl2ss.StreamPort.RM_DEPTH_LONGTHROW, calibration_path)
 
-        uv2xy = hl2ss_3dcv.compute_uv2xy(calibration_lt.intrinsics, hl2ss.Parameters_RM_DEPTH_LONGTHROW.WIDTH, hl2ss.Parameters_RM_DEPTH_LONGTHROW.HEIGHT)
+        uv2xy = hl2ss_3dcv.compute_uv2xy(calibration_lt.intrinsics, hl2ss.Parameters_RM_DEPTH_LONGTHROW.WIDTH,
+                                         hl2ss.Parameters_RM_DEPTH_LONGTHROW.HEIGHT)
         xy1, depth_scale = hl2ss_3dcv.rm_depth_compute_rays(uv2xy, calibration_lt.scale)
-         # Start PV and RM Depth Long Throw streams --------------------------------
+        # Start PV and RM Depth Long Throw streams --------------------------------
         producer = hl2ss_mp.producer()
-        producer.configure(hl2ss.StreamPort.PERSONAL_VIDEO, hl2ss_lnm.rx_pv(host, hl2ss.StreamPort.PERSONAL_VIDEO, width=pv_width, height=pv_height, framerate=pv_framerate, decoded_format='rgb24'))
-        producer.configure(hl2ss.StreamPort.RM_DEPTH_LONGTHROW, hl2ss_lnm.rx_rm_depth_longthrow(host, hl2ss.StreamPort.RM_DEPTH_LONGTHROW))
+        producer.configure(hl2ss.StreamPort.PERSONAL_VIDEO,
+                           hl2ss_lnm.rx_pv(host, hl2ss.StreamPort.PERSONAL_VIDEO, width=pv_width, height=pv_height,
+                                           framerate=pv_framerate, decoded_format='rgb24'))
+        producer.configure(hl2ss.StreamPort.RM_DEPTH_LONGTHROW,
+                           hl2ss_lnm.rx_rm_depth_longthrow(host, hl2ss.StreamPort.RM_DEPTH_LONGTHROW))
         producer.initialize(hl2ss.StreamPort.PERSONAL_VIDEO, pv_framerate * buffer_length)
-        producer.initialize(hl2ss.StreamPort.RM_DEPTH_LONGTHROW, hl2ss.Parameters_RM_DEPTH_LONGTHROW.FPS * buffer_length)
+        producer.initialize(hl2ss.StreamPort.RM_DEPTH_LONGTHROW,
+                            hl2ss.Parameters_RM_DEPTH_LONGTHROW.FPS * buffer_length)
         producer.start(hl2ss.StreamPort.PERSONAL_VIDEO)
         producer.start(hl2ss.StreamPort.RM_DEPTH_LONGTHROW)
 
@@ -381,7 +362,7 @@ if __name__ == '__main__':
         sink_pv.get_attach_response()
         sink_depth.get_attach_response()
 
-        #init unity comm
+        # init unity comm
         ipc = hl2ss_lnm.ipc_umq(host, hl2ss.IPCPort.UNITY_MESSAGE_QUEUE)
         ipc.open()
         key = 0
@@ -389,33 +370,41 @@ if __name__ == '__main__':
         command_buffer.remove_all()
         ipc.push(command_buffer)
         results = ipc.pull(command_buffer)
-        #keys = instantiate_gos(ipc)
+        boxManager.set_ipc(ipc)
+        # keys = instantiate_gos(ipc)
 
     # Initialize PV intrinsics and extrinsics ---------------------------------
     pv_intrinsics = hl2ss.create_pv_intrinsics_placeholder()
     pv_extrinsics = np.eye(4, 4, dtype=np.float32)
- 
+
     view_mana = view_manager.ViewManager()
 
     data = set_up_data_struct(prompts)
 
-
-    start_time = time.time()
+    intrinsics_depth = o3d.camera.PinholeCameraIntrinsic(hl2ss.Parameters_RM_DEPTH_LONGTHROW.WIDTH,
+                                                         hl2ss.Parameters_RM_DEPTH_LONGTHROW.HEIGHT,
+                                                         calibration_lt.intrinsics[0, 0],
+                                                         calibration_lt.intrinsics[1, 1],
+                                                         calibration_lt.intrinsics[2, 0],
+                                                         calibration_lt.intrinsics[2, 1])
+    
 
     # Main Loop ---------------------------------------------------------------
     counter = 0
+    print("start detecting")
     while (enable):
-        
+        if inference_done:
+            continue
         if from_recording:
             # Get LT Depth frame ------------------------------------------------------------
-            data_depth = rd_lt.get_next_packet() 
+            data_depth = rd_lt.get_next_packet()
             if ((data_depth is None) or (not hl2ss.is_valid_pose(data_depth.pose))):
                 continue
             # Find PV corresponding to the current Depth frame ----------------
-            data_pv = rd_pv.get_next_packet(data_depth.timestamp) # Get nearest (in time) pv frame
+            data_pv = rd_pv.get_next_packet(data_depth.timestamp)  # Get nearest (in time) pv frame
             if ((data_pv is None) or (not hl2ss.is_valid_pose(data_pv.pose))):
                 continue
-        else:    
+        else:
             # Wait for RM Depth Long Throw frame ----------------------------------
             sink_depth.acquire()
 
@@ -428,82 +417,250 @@ if __name__ == '__main__':
             if ((data_pv is None) or (not hl2ss.is_valid_pose(data_pv.pose))):
                 continue
 
+        
+
         # Preprocess frames ---------------------------------------------------
         depth = hl2ss_3dcv.rm_depth_undistort(data_depth.payload.depth, calibration_lt.undistort_map)
         depth = hl2ss_3dcv.rm_depth_normalize(depth, depth_scale)
         color_np = data_pv.payload.image
+        #change to pil rbg data
         color_np = color_np[:,:,[2,1,0]]
         color_pil = Image.fromarray(color_np)
-     
-        (image_isNovel_view,index,img) = view_mana.new_view(color_np)
+
+        # get depth and color alignment
+        pv_intrinsics = hl2ss.update_pv_intrinsics(pv_intrinsics, data_pv.payload.focal_length,
+                                                   data_pv.payload.principal_point)
+        color_intrinsics, color_extrinsics = hl2ss_3dcv.pv_fix_calibration(pv_intrinsics, pv_extrinsics)
+
+        lt_points = hl2ss_3dcv.rm_depth_to_points(xy1, depth)
+        lt_to_world = hl2ss_3dcv.camera_to_rignode(calibration_lt.extrinsics) @ hl2ss_3dcv.reference_to_world(
+            data_depth.pose)
+        world_to_lt = hl2ss_3dcv.world_to_reference(data_depth.pose) @ hl2ss_3dcv.rignode_to_camera(
+            calibration_lt.extrinsics)
+
+        world_to_color = hl2ss_3dcv.world_to_reference(data_pv.pose) @ hl2ss_3dcv.rignode_to_camera(
+            color_extrinsics)
+
+        world_to_pv_image = hl2ss_3dcv.world_to_reference(data_pv.pose) @ hl2ss_3dcv.rignode_to_camera(
+            color_extrinsics) @ hl2ss_3dcv.camera_to_image(color_intrinsics)
+        world_points = hl2ss_3dcv.transform(lt_points, lt_to_world)
+        pv_uv = hl2ss_3dcv.project(world_points, world_to_pv_image)
+        
+        
+        
+        color = cv2.remap(color_np, pv_uv[:, :, 0], pv_uv[:, :, 1], cv2.INTER_LINEAR)
+        mask_uv = hl2ss_3dcv.slice_to_block(
+            (pv_uv[:, :, 0] < 0) | (pv_uv[:, :, 0] >= pv_width) | (pv_uv[:, :, 1] < 0) | (pv_uv[:, :, 1] >= pv_height))
+        depth_recon = np.copy(depth)
+        depth_recon[mask_uv] = 0
+        
+        #pdb.set_trace()
+        #(image_isNovel_view, index, img) = view_mana.new_view(color_np)
+        if counter%sample_frequency ==0:
+            image_isNovel_view = True
+            index = counter // sample_frequency
+            img = color_np
+            #print(counter)
+        else:
+            image_isNovel_view = False
+            index = -1
+            img = None
+            #print(counter)
+
         if image_isNovel_view:
-            #color_pil.save(f"{path_start}{write_data_path}{counter}.jpeg")
-            if counter < MIN_FRAME_NUM:
-                print(f"view: {counter}")
-                counter +=1
-                for index, prompt in enumerate(data.keys()):
-                    boxes, logits, phrases = get_boxes(color_pil, prompt)
-                    if(len(boxes) != 0 and not from_recording):
-                        send_detection(index)
-                        print(f"sending {prompt}")
-                    embedded_cropped_box_data = []
+            pv_timestamp = data_pv.timestamp
+            depth_timestamp = data_depth.timestamp
+            print("saving frame ", str(index))
+            #color_pil.save(path_start + write_data_path + "selected_frame" + str(index) + ".jpeg")
+            boxManager.new_frame(color_pil, pv_timestamp, depth_timestamp, np.copy(depth),color_intrinsics,world_to_color.transpose(),world_to_lt.transpose())
+            #boxManager.output_det()
 
-                    for box, phrase, logit in zip(boxes, phrases, logits):
-                        #print(prompt, logit)
-                        cropped_image = crop_image(color_pil, box)
-                        embedded_cropped_image = apply_clip_embedding_image(cropped_image)
-                        #similarity_score = apply_clip(embedded_cropped_image, data[prompt]['tokenized_prompt']) #currently I apply later over all images as batch ? will this aid discrimination or irrelevant? 
-                        embedded_cropped_box_data.append({
-                            'box': box, 
-                            'phrase': phrase, 
-                            'logit': logit, 
-                            'cropped_image': cropped_image, 
-                            'embedding': embedded_cropped_image,
-                            'color_pil': color_pil,
-                            'data_depth': data_depth,
-                            'data_pv': data_pv
-                            #'similarity_score' : similarity_score,
-                        })
-
-                    data[prompt]['frames'][data_depth.timestamp] = {
-                        'boxes': embedded_cropped_box_data
-                    }
-
-        if (counter >= MIN_FRAME_NUM) or (2 in check_done()): #TODO need to find better integration, e.g. UI for room scan complete then stop receiving data,already run inference before async
-            
-            for index, prompt in enumerate(data.keys()):
-                print(prompt)
-                apply_clip_batch(prompt,3,0.03)
-                print("actuslly used")
-                data[prompt]["point_cloud"] = np.array([])
-                for timestamp, frame_data in data[prompt]['frames'].items():
-                    for box_data in frame_data['boxes']:
-                        if(box_data['top_result']):
-                            print(box_data['sim_score'])
-                            box_data['combined_mask'] = get_mask(box_data['color_pil'],box_data['box'])
-                            if write_data:
-                                combined_mask_pil = Image.fromarray(box_data['combined_mask'])
-                                result = Image.blend(box_data["color_pil"], combined_mask_pil.convert("RGB"), alpha=0.5)
-                                score = box_data["sim_score"]
-                                logit = box_data["logit"]
-                                result.save(f"{path_start}{write_data_path}{prompt[0:10]}clip{score}dino{logit}.jpeg")
-                            box_data["points"] = get_segmented_points(box_data, depth_scale, max_depth, xy1, calibration_lt)
-                            if data[prompt]["point_cloud"].size == 0:
-                                data[prompt]["point_cloud"] = box_data["points"]
-                            else:
-                                data[prompt]["point_cloud"] = np.concatenate((data[prompt]["point_cloud"], box_data["points"]), axis=0)
-            
-                if(data[prompt]["point_cloud"].size == 0):
-                    continue
-                if from_recording == False:
-                    #results = display_point_cloud(data[prompt]["point_cloud"],index ) #get bbox using open3d, create cube over bbox with outline shader, maybe add arrow TODO
-                    results = display_centroid(data[prompt]["point_cloud"],index )
-                    results_pc = display_point_cloud(data[prompt]["point_cloud"],index )
+            if reconstruct_point_cloud:
+                color_image = o3d.geometry.Image(color)
+                depth_image = o3d.geometry.Image(depth_recon)
+                rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(color_image, depth_image, depth_scale=1,
+                                                                       depth_trunc=max_depth,
+                                                                       convert_rgb_to_intensity=False)
+                volume.integrate(rgbd, intrinsics_depth, world_to_lt.transpose())
+                pcd_tmp = volume.extract_point_cloud()
+                if counter == 0:
+                  pcd = pcd_tmp
+                  if visualize_reconstruction:
+                    recon_vis.add_geometry(pcd)
+                else:
+                    if visualize_reconstruction:
+                        print("updating the point cloud")
+                        pcd.points = pcd_tmp.points
+                        pcd.colors = pcd_tmp.colors
+                        recon_vis.update_geometry(pcd)
+                if (2 in check_done()): #user presses done
+                    #restrict the number of masks in the desired class
+                    restricted_class= 4
+                    restricted_number =8
+                    restricted_frame_stride=5
+                    mask_2d = boxManager.frame_masks
+                    for m in mask_2d:
+                        m["segmented_frame_masks"] = m["masks"]
+                        m["labels"] = m["classes"]
+                        m["confidences"] = torch.ones(len(m["masks"]))
+                    pcd_down = pcd_tmp.voxel_down_sample(voxel_size=0.02)
+                    o3d.io.write_point_cloud(path+"/downsampled_pcd.ply", pcd_down)
+                    pcd_3d = np.asarray(pcd_down.points)
                     
-            
-            break
+                    pcd_3d = np.concatenate([pcd_3d, torch.ones([pcd_3d.shape[0], 1])], axis=1).T # shape (3, N)
 
-    #shutdown server
+                    cam_intr = mask_2d[0]["color_intrinsics"].T[:3, :3]
+                    
+                    """ 1. Project 2d masks to 3d point cloud"""
+                    backprojected_3d_masks = {
+                        "ins": [],  # (Ins, N)
+                        "conf": [],  # (Ins, )
+                        "final_class": [],  # (Ins,)
+                    }
+                    for i in tqdm(range(len(mask_2d))):
+                        print("-------------------------frame", i, "-------------------------")
+                        """Test data, rehplace with real images from bin files"""
+                        # load depth image
+                        depth_im = mask_2d[i]["depth_image"]
+                        # load camera pose
+                        # mask_2d[i]["color_extrinsics"] is world to camera pose, our function requires camera to world pose
+                        cam_pose = np.linalg.inv(mask_2d[i]["color_extrinsics"])  #
+                        depth_pose = np.linalg.inv(mask_2d[i]["depth_extrinsics"])
+
+                        backprojected_3d_masks = project_2d_to_3d_single_frame(
+                            backprojected_3d_masks,
+                            cam_intr,
+                            depth_im,
+                            cam_pose,
+                            depth_pose,
+                            mask_2d[i],
+                            pcd_3d,
+                            760,
+                            428,
+                            depth_intr=np.array(
+                                [
+                                    [174.79669, 0.0, 156.74863],
+                                    [0.0, 181.98889, 172.73248],
+                                    [
+                                        0.0,
+                                        0.0,
+                                        1.0,
+                                    ],
+                                ]
+                            ),
+                            depth_thresh=0.1,
+                            depth_scale=1,
+                        )
+                    
+                    print("sucsessfully saved point cloud")
+                    pcd.points=pcd_down.points
+                    pcd.colors = pcd_down.colors
+                    # convert to tensor
+                    backprojected_3d_masks["ins"] = torch.stack(backprojected_3d_masks["ins"])  # (Ins, N)
+                    backprojected_3d_masks["conf"] = torch.tensor(backprojected_3d_masks["conf"])  # (Ins, )
+                    torch.save(backprojected_3d_masks,path+"/backprojected_3d_masks.pth")
+                    """ 2. Aggregating 3d masks"""
+                    # start aggregation
+                    aggregated_3d_masks, mask_indeces_to_be_merged = aggregate(backprojected_3d_masks, iou_threshold=0.1)
+                    torch.save(aggregated_3d_masks, path+"/aggregated_3d_masks.pth")
+
+                    """ 3. Filtering 3d masks"""
+                    # start filtering
+                    filtered_3d_masks = filter(aggregated_3d_masks, mask_indeces_to_be_merged, backprojected_3d_masks, if_occurance_threshold=True,occurance_thres= 0.2, small_mask_thres=20, filtered_mask_thres=0.1)
+
+                    """
+                    {
+                        "ins": torch.Tensor,  # (Ins, N)
+                        "conf": torch.Tensor,  # (Ins, )
+                        "final_class": list of torch.Tensor# (Ins,)
+                    }
+                    """
+                    torch.save(filtered_3d_masks, path+"/filtered_3d_masks.pth")
+
+                    pcd_3d = pcd_3d.T # shape (N,3)
+                    
+
+                    pcd = pcd_down
+                    # Load the segmentation masks from .pth file
+                    seg_masks: dict = filtered_3d_masks
+                    # Get the floor grid
+                    plane_model, inliers = pcd.segment_plane(distance_threshold=0.1,
+                                                                    ransac_n=3,
+                                                                    num_iterations=1000)
+                    #z_norm.shape = (3,)
+                    z_norm = get_z_norm_of_plane(plane_model[0], plane_model[1], plane_model[2], plane_model[3], np.asarray(pcd.points))
+                    #get the rotation matrix
+                    rot_matrix = rotation_matrix_from_vectors(z_norm,np.asarray([0.0,0.0,1.0]))
+                    #transform the point cloud
+                    transform_matrix = np.eye(4, dtype=float)
+                    transform_matrix[0:3, 0:3] = rot_matrix
+
+                    coords_for_pathplanning = np.asarray(pcd.points).copy()
+                    #transform the coords using the rotation matrix:
+                    coords_for_pathplanning = np.dot(coords_for_pathplanning, rot_matrix)
+                    #get the mean of the z coordinates of the inliers
+                    z_mean = get_floor_mean(np.asarray(coords_for_pathplanning)[inliers])
+                    #get the floor grid
+                    grid, bb, voxel_size, coor_to_grid, grid_to_coor = get_floor_grid(coords_for_pathplanning, z_mean, 100)
+                    path_plan_point_clouds = []
+                    path_for_class = []
+                    #get the starting point and end point of the path planning
+                    for instance_index, instance in enumerate(seg_masks["ins"]):
+                        instance = instance.cpu()
+                        #shape of instance: (N,) mask
+                        instance_coords = coords_for_pathplanning[instance]
+                        #get the grid coordinates of the object
+                        instance_grid_coords = get_object_grid_coordinates(instance_coords, coor_to_grid)
+                        #get the starting point in the grid(non occulusion)
+                        start_point = get_starting_point(instance_grid_coords, grid)
+                        #get the end point in the grid
+                        grid_center = np.array([grid.shape[0]//2, grid.shape[1]//2])
+                        end_point = get_starting_point(np.asarray([grid_center]), grid)
+                        #get the path plan
+                        path_plan = astar(grid, start_point, end_point)
+                        #visualize the path plan o3d
+                        path_plan_coords = np.array([grid_to_coor(point[0],point[1]) for point in path_plan])
+                        #go back to world coordinates
+                        path_plan_coords = np.dot(path_plan_coords, rot_matrix.T)
+                        #visualize the path plan in open3d
+                        path_plan_pcd = o3d.geometry.PointCloud()
+                        path_plan_pcd.points = o3d.utility.Vector3dVector(path_plan_coords)
+                        path_plan_pcd.paint_uniform_color([0.0, 0.0, 1.0])
+                        path_plan_point_clouds.append(path_plan_pcd)
+                        path_for_class.append(seg_masks["final_class"][instance_index])
+                        print(np.asarray(path_plan_pcd.points).shape)
+                        print(prompts_lookup[seg_masks["final_class"][instance_index]])
+                    #path_plan_point_clouds -->here it's still all paths seg_mask[“final_class”][index]
+                    # for prompt in prompts:
+                    #     path = 
+                    path_plan_point_clouds.append(pcd) #whole scene
+                    o3d.visualization.draw_geometries(path_plan_point_clouds)
+                    
+                    for points_filtered_mask, class_filtered in zip(filtered_3d_masks["ins"], filtered_3d_masks["final_class"]): # points_filtered_mask shape (N)
+                        points_filtered = pcd_3d[points_filtered_mask.cpu().numpy()]
+                        print("sent centroid to HL2: ", prompts_lookup[class_filtered.cpu().numpy()])
+                        
+                        if not from_recording:
+                            #display centroid to unity
+                            #[[x,y,z],[x,y,z]...] --> certain prompt (index)
+                            points = (points_filtered[:, :3]).astype(np.float32)
+                            results = display_centroid(points,int(class_filtered.cpu().numpy()) )
+                            results_pc = display_point_cloud(points,int(class_filtered.cpu().numpy()))
+                    
+                            
+                    print("finished")
+                    if visualize_reconstruction:
+                        recon_vis.destroy_window()
+                    inference_done = True
+                    
+
+
+                if visualize_reconstruction:
+                    recon_vis.poll_events()
+                    recon_vis.update_renderer()
+
+        counter += 1
+    # shutdown server
     if from_recording:
         rd_pv.close()
         rd_lt.close()
@@ -516,11 +673,8 @@ if __name__ == '__main__':
 
         # Stop PV subsystem -------------------------------------------------------
         hl2ss_lnm.stop_subsystem_pv(host, hl2ss.StreamPort.PERSONAL_VIDEO)
-        
-    if not remote_docker:    
-        # Stop keyboard events ----------------------------------------------------
-        listener.join()
-    
-    
+    # Stop keyboard events ----------------------------------------------------
+    # listener.join()
 
-  
+
+

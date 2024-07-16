@@ -55916,7 +55916,7 @@ MonoBehaviour:
   - {fileID: 3805059761489098345}
   - {fileID: 5298182097362780619}
   - {fileID: 8784494762937594018}
-  detectionCount: 5
+  detectionCount: 10
   AIDone: 0
   HandMenuManager: {fileID: 1947783663}
   m_material: {fileID: 2100000, guid: d330e6b32bc73cb449eed088bf56f6d4, type: 2}
