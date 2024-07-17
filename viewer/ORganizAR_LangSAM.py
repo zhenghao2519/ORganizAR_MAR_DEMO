@@ -209,7 +209,7 @@ def display_point_cloud(points: np.ndarray, prompt_index: int) -> np.ndarray:
     display_list.begin_display_list() # Begin sequence
     # Check if subsampling is needed
     max_chunk_size = 65535
-    print(prompt_index,len(points))
+
 
     if len(points) >= max_chunk_size:
         points = points[np.random.choice(len(points), 65535, replace=False)]
@@ -253,8 +253,28 @@ def display_centroid(points: np.ndarray, prompt_index: int) -> np.ndarray:
 
     return ipc.pull(display_list) # Get results from server
  
-
-
+def display_debug_sphere(point) -> np.ndarray:
+    point[2] = -point[2] #unity is lefthanded
+    display_list = hl2ss_rus.command_buffer()
+    display_list.begin_display_list() # Begin sequence
+    display_list.create_primitive(hl2ss_rus.PrimitiveType.Sphere) 
+    display_list.set_target_mode(hl2ss_rus.TargetMode.UseLast) 
+    display_list.set_world_transform(0, point, [0, 0, 0, 1], [0.2,0.2,0.2]) 
+    display_list.set_active(0, 1) 
+    display_list.end_display_list() 
+    ipc.push(display_list) 
+    return ipc.pull(display_list) 
+def display_debug_cube(point) -> np.ndarray:
+    point[2] = -point[2] #unity is lefthanded
+    display_list = hl2ss_rus.command_buffer()
+    display_list.begin_display_list() # Begin sequence
+    display_list.create_primitive(hl2ss_rus.PrimitiveType.Cube) 
+    display_list.set_target_mode(hl2ss_rus.TargetMode.UseLast) 
+    display_list.set_world_transform(0, point, [0, 0, 0, 1], [0.2,0.2,0.2]) 
+    display_list.set_active(0, 1) 
+    display_list.end_display_list() 
+    ipc.push(display_list) 
+    return ipc.pull(display_list) 
 def check_done() :
    
     display_list = hl2ss_rus.command_buffer()
@@ -628,17 +648,20 @@ if __name__ == '__main__':
                         instance = instance.cpu()
                         #shape of instance: (N,) mask
                         instance_coords = coords_for_pathplanning[instance]
+                        print("instance_coords", coords_for_pathplanning[instance])
                         #get the grid coordinates of the object
                         instance_grid_coords = get_object_grid_coordinates(instance_coords, coor_to_grid)
                         #get the starting point in the grid(non occulusion)
                         start_point = get_starting_point(instance_grid_coords, grid)
+                        print("start_point", start_point)
                         #get the end point in the grid
                         grid_center = np.array([grid.shape[0]//2, grid.shape[1]//2])
                         target_pos = get_target_pos(seg_masks["final_class"][instance_index])
-
-                        #TODO (N,3) instead of just [x,y,z]
+                        print("target_pos", target_pos)
+                        target_pos = np.reshape(target_pos, (1, 3))
                         target_pos_instance_grid_coords = get_object_grid_coordinates(target_pos, coor_to_grid)
                         end_point = get_starting_point(target_pos_instance_grid_coords, grid)
+                        print("end_point", end_point)
                         #end_point = get_starting_point(np.asarray([grid_center]), grid)
                         #get the path plan
                         path_plan = astar(grid, start_point, end_point)
@@ -662,21 +685,22 @@ if __name__ == '__main__':
                     
                     for points_filtered_mask, class_filtered in zip(filtered_3d_masks["ins"], filtered_3d_masks["final_class"]): # points_filtered_mask shape (N)
                         points_filtered = pcd_3d[points_filtered_mask.cpu().numpy()]
-                        print("sent centroid to HL2: ", prompts_lookup[class_filtered.cpu().numpy()])
+                        
                         
                         if not from_recording:
                             #display centroid to unity
                             #[[x,y,z],[x,y,z]...] --> certain prompt (index)
                             points = (points_filtered[:, :3]).astype(np.float32)
+                            print("sent centroid to HL2: ", prompts_lookup[class_filtered.cpu().numpy()])
                             results = display_centroid(points,int(class_filtered.cpu().numpy()) )
                             #results_pc = display_point_cloud(points,int(class_filtered.cpu().numpy()))
                              # Append the paths to the point cloud
                             for path_pcd, class_index in zip(path_plan_point_clouds, path_for_class):
                                 if class_index == int(class_filtered.cpu().numpy()):
-                                    points1 = np.asarray(path_pcd.points, dtype=np.float32)
-                                    points2 = np.asarray(points_filtered[:, :3], dtype=np.float32)
-                                    combined_points = np.concatenate((points1, points2), axis=0)
-                                    results_pc = display_point_cloud(points,int(class_filtered.cpu().numpy()))
+                                    print("sent pc target and path to HL2: ", prompts_lookup[class_filtered.cpu().numpy()])
+                                    points2 = np.asarray(path_pcd.points, dtype=np.float32)
+                                    combined_points = np.concatenate((points, points2), axis=0)
+                                    results_pc = display_point_cloud(combined_points,int(class_filtered.cpu().numpy()))
       
                     
                             

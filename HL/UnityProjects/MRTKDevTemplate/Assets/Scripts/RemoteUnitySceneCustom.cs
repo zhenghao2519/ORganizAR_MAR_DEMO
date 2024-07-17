@@ -51,17 +51,21 @@ public class RemoteUnitySceneCustom : MonoBehaviour
         m_loop = false;
         m_mode = false;
     }
-
+    public GameObject targetRenderingsParent;
     void Update()
     {
         while (GetMessage() && m_loop) ;
         if (AIDone)
         {
             AIDone = false; //for debugging
+            targetRenderingsParent.SetActive(true);
             HandMenuManager.AIDone();
         }
     }
+    public void SetTargetsActive() {
 
+        targetRenderingsParent.SetActive(true);
+    }
   
     bool GetMessage()
     {
