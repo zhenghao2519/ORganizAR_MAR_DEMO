@@ -634,15 +634,12 @@ if __name__ == '__main__':
                         start_point = get_starting_point(instance_grid_coords, grid)
                         #get the end point in the grid
                         grid_center = np.array([grid.shape[0]//2, grid.shape[1]//2])
-                        
                         target_pos = get_target_pos(seg_masks["final_class"][instance_index])
 
-
-
-
-
-
-                        end_point = get_starting_point(np.asarray([grid_center]), grid)
+                        #TODO (N,3) instead of just [x,y,z]
+                        target_pos_instance_grid_coords = get_object_grid_coordinates(target_pos, coor_to_grid)
+                        end_point = get_starting_point(target_pos_instance_grid_coords, grid)
+                        #end_point = get_starting_point(np.asarray([grid_center]), grid)
                         #get the path plan
                         path_plan = astar(grid, start_point, end_point)
                         #visualize the path plan o3d
@@ -672,7 +669,15 @@ if __name__ == '__main__':
                             #[[x,y,z],[x,y,z]...] --> certain prompt (index)
                             points = (points_filtered[:, :3]).astype(np.float32)
                             results = display_centroid(points,int(class_filtered.cpu().numpy()) )
-                            results_pc = display_point_cloud(points,int(class_filtered.cpu().numpy()))
+                            #results_pc = display_point_cloud(points,int(class_filtered.cpu().numpy()))
+                             # Append the paths to the point cloud
+                            for path_pcd, class_index in zip(path_plan_point_clouds, path_for_class):
+                                if class_index == int(class_filtered.cpu().numpy()):
+                                    points1 = np.asarray(path_pcd.points, dtype=np.float32)
+                                    points2 = np.asarray(points_filtered[:, :3], dtype=np.float32)
+                                    combined_points = np.concatenate((points1, points2), axis=0)
+                                    results_pc = display_point_cloud(points,int(class_filtered.cpu().numpy()))
+      
                     
                             
                     print("finished")
