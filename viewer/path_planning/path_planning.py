@@ -214,7 +214,10 @@ def get_starting_point(grid_coords:np.ndarray, grid:np.ndarray)->(int,int):
     res = None
     for i in region_x:
         for j in region_y:
-
+# end_point = get_starting_point(target_pos_instance_grid_coords, grid)
+#   File "/mnt/c/Users/Marc/Desktop/dev/ORganizAR_MAR_DEMO/viewer/path_planning/path_planning.py", line 218, in get_starting_point
+#     if grid[i,j] == 0:
+# IndexError: index 130 is out of bounds for axis 0 with size 100
             if grid[i,j] == 0:
                d = np.linalg.norm(np.array([i,j])-np.array(coords_center))
                if d < distance:
