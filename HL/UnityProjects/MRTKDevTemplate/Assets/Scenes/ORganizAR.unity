@@ -5118,6 +5118,7 @@ MonoBehaviour:
   - {fileID: 181570488}
   - {fileID: 661330840}
   - {fileID: 757445860}
+  remoteUnitySceneCustom: {fileID: 5241374000872371059}
 --- !u!1 &242749235
 GameObject:
   m_ObjectHideFlags: 0
@@ -55919,6 +55920,7 @@ MonoBehaviour:
   detectionCount: 10
   AIDone: 0
   HandMenuManager: {fileID: 1947783663}
+  SelectedSetup: {fileID: 1689413238}
   m_material: {fileID: 2100000, guid: d330e6b32bc73cb449eed088bf56f6d4, type: 2}
 --- !u!114 &5281099424951801721
 MonoBehaviour:

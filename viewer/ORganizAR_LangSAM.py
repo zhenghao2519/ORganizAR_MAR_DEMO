@@ -210,7 +210,6 @@ def display_point_cloud(points: np.ndarray, prompt_index: int) -> np.ndarray:
     # Check if subsampling is needed
     max_chunk_size = 65535
     print(prompt_index,len(points))
-    print(points)
 
     if len(points) >= max_chunk_size:
         points = points[np.random.choice(len(points), 65535, replace=False)]
@@ -266,6 +265,26 @@ def check_done() :
     res = ipc.pull(display_list) # Get results from server
     #print("res: ",res)
     return res
+
+def uint_to_float(value, offset= 1000.0, factor = 1000.0):
+    return (value / factor) - offset
+
+
+def get_target_pos(prompt_index):
+    pos = []
+    for axis in range(3):
+        print("axis:" ,axis)
+        display_list = hl2ss_rus.command_buffer()
+        display_list.begin_display_list() 
+        display_list.get_target_pos(prompt_index,axis)
+        display_list.end_display_list() # End sequence
+        ipc.push(display_list) # Send commands to server
+        res = ipc.pull(display_list)[1] # Get results from server
+        res = uint_to_float(res)
+        print("get_target_pos: ",res)
+        pos.append(res)
+    print("pos", pos)
+    return pos
 
 def on_press(key):
     global enable
@@ -615,6 +634,14 @@ if __name__ == '__main__':
                         start_point = get_starting_point(instance_grid_coords, grid)
                         #get the end point in the grid
                         grid_center = np.array([grid.shape[0]//2, grid.shape[1]//2])
+                        
+                        target_pos = get_target_pos(seg_masks["final_class"][instance_index])
+
+
+
+
+
+
                         end_point = get_starting_point(np.asarray([grid_center]), grid)
                         #get the path plan
                         path_plan = astar(grid, start_point, end_point)

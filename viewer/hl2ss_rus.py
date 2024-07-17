@@ -89,5 +89,8 @@ class command_buffer(hl2ss.umq_command_buffer):
     def send_point_cloud(self,len, point_cloud):
         self.add(25, struct.pack('<I', len)+ point_cloud.tobytes())
 
+    def get_target_pos(self,target_index,axis):
+        self.add(26, struct.pack('<I', target_index) + struct.pack('<I', axis))
+
 
 

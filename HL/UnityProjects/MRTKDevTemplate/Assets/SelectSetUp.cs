@@ -10,6 +10,7 @@ public class SelectSetUp : MonoBehaviour
     public GameObject gameObject3;
     public GameObject items;
     public List<GameObject> spheres;
+    public RemoteUnitySceneCustom remoteUnitySceneCustom;
 
     // Start is called before the first frame update
     void Start()
@@ -26,6 +27,7 @@ public class SelectSetUp : MonoBehaviour
 
     public void ActivateGameObject1()
     {
+        remoteUnitySceneCustom.SelectedSetup = gameObject1;
         gameObject1.SetActive(true);
         gameObject2.SetActive(false);
         gameObject3.SetActive(false);
@@ -35,6 +37,7 @@ public class SelectSetUp : MonoBehaviour
     public void ActivateGameObject2()
     {
         gameObject2.SetActive(true);
+        remoteUnitySceneCustom.SelectedSetup = gameObject2;
         gameObject1.SetActive(false);
         gameObject3.SetActive(false);
     }
@@ -42,6 +45,7 @@ public class SelectSetUp : MonoBehaviour
     public void ActivateGameObject3()
     {
         gameObject3.SetActive(true);
+        remoteUnitySceneCustom.SelectedSetup = gameObject3;
         gameObject1.SetActive(false);
         gameObject2.SetActive(false);
     }

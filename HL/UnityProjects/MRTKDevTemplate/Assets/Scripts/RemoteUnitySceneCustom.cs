@@ -18,11 +18,15 @@ public class RemoteUnitySceneCustom : MonoBehaviour
     private bool m_mode;
     private int m_last_key;
     public List<GameObject> targets = new List<GameObject>();
+
     public int detectionCount = 10;
     private bool done = false;
     private int pc_counter = 0;
     public bool AIDone = false;
     public HandMenuManager HandMenuManager;
+
+    public GameObject SelectedSetup;
+
     private List<Color> colorList = new List<Color>
     {
         Color.red,
@@ -95,11 +99,57 @@ public class RemoteUnitySceneCustom : MonoBehaviour
             case 23: ret = MSG_CheckDone(); break;
             case 24: ret = MSG_CreatePCRenderer(); break;
             case 25: ret = MSG_SetPointCloud(data); break;
+            case 26: ret = GetTargetPosition(data); break;
             case ~0U: ret = MSG_Disconnect(data); break;
         }
 
         return ret;
     }
+
+    static uint FloatToUint(float value)
+    {
+
+        return (uint)((value + 1000.0f) * 1000);
+    }
+
+    uint GetTargetPosition(byte[] data)
+    {
+        if (data.Length < 8) { return 0; }
+
+        int promptIndex = BitConverter.ToInt32(data, 0);
+        int axis = BitConverter.ToInt32(data, 4);
+        List<GameObject> childObjects = new List<GameObject>();
+        foreach (Transform child in SelectedSetup.GetComponentsInChildren<Transform>())
+        {
+            if (child.gameObject != SelectedSetup)
+            {
+                childObjects.Add(child.gameObject);
+            }
+        }
+        GameObject go = childObjects[promptIndex];
+        if ( go == null)
+        {
+            return 100000000;
+        }
+        Vector3 targetPos  = go.transform.position;
+        uint result = 0;
+        switch (axis) 
+        {
+            case 0:
+                result = FloatToUint(targetPos.x);
+                break;
+            case 1:
+                result = FloatToUint(targetPos.y);
+                break;
+            case 2:
+                result = FloatToUint(targetPos.z);
+                break;
+        }
+ 
+        return result;
+    }
+
+
     uint MSG_CreatePCRenderer()
     {
         pc_counter += 1;
