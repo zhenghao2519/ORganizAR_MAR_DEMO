@@ -30,7 +30,7 @@ from utils import project_2d_to_3d_single_frame, aggregate, filter
 from path_planning.path_planning import get_floor_grid, rotation_matrix_from_vectors
 from path_planning.path_planning import get_z_norm_of_plane, get_floor_mean
 from path_planning.path_planning import astar, get_object_grid_coordinates
-from path_planning.path_planning import get_starting_point
+from path_planning.path_planning import get_starting_point, register_moved_target
 
 # Settings --------------------------------------------------------------------
 log_file_path = "./log.txt"
@@ -39,9 +39,9 @@ log_file_path = "./log.txt"
 from_recording = False # set to run live on HL vs from recorded dataset
 visualization_enabled = False
 write_data = True
-wsl = True
+wsl = False
 remote_docker = False
-Alienware = False
+Alienware = True
 reconstruct_point_cloud = True
 visualize_reconstruction = False
 
@@ -54,23 +54,24 @@ if wsl:
 elif remote_docker:
     path_start = "/medar_smart/"
 elif Alienware:
-    path_start = "/data/projects/medar_smart/ORganizAR/"
+    path_start = "/data/projects/medar_smart/ORganizAR_Demo/"
     print("start path: ", path_start)
 else:
     path_start = "/Users/haoyangsun/Documents/ORganizAR/"
     print("start path: ", path_start)
 
 # HoloLens address
-host = '192.168.0.101'
+host = '192.168.147.253'
 
 # Directory containing the recorded data
 path = path_start + 'viewer/data'
 
-df = pd.read_csv(path+"/rm_depth_longthrow.csv")
+#df = pd.read_csv(path+"/rm_depth_longthrow.csv")
 stop_num_frames = 60
 sample_frequency = 3 #df.shape[0] // stop_num_frames #dataset1: 5   dataset2: 2
 # Directory containing the calibration data of the HoloLens
 calibration_path: str = path_start + 'calibration/rm_depth_longthrow/'
+os.makedirs(calibration_path, exist_ok=True)
 
 point_cloud_path: str = path + '/point_cloud_recon.pcd'
 mask_path: str = path + 'seg_mask.pth'
@@ -104,8 +105,8 @@ o3d_device = o3d.core.Device("CUDA:0" if torch.cuda.is_available() else "CPU:0")
 print("using device: ", o3d_device, " for reconstruction")
 
 # Test data setup
-image_pil_timer = Image.open(path_start + "viewer/test_timer.png")
-image_pil_bed = Image.open(path_start + "/viewer/test_bed.png")
+# image_pil_timer = Image.open(path_start + "viewer/test_timer.png")
+# image_pil_bed = Image.open(path_start + "/viewer/test_bed.png")
 # prompts_lookup = [ 
 #     "table with a light-blue cloth",
 #     "medical equipment cart, has multiple shelves, a handle on top, and is grey with some blue sections",
@@ -126,11 +127,14 @@ image_pil_bed = Image.open(path_start + "/viewer/test_bed.png")
 #     ]
 
 #___________________________________________________________________________________
-# prompts_lookup = ["bed with a dummy on it","a grey shelf with a pole on it",
+# prompts_lookup = ["patient bed","a grey shelf with a pole on it",
 #                   "c arm machine, which is a medical machine with a large c shaped metal arm",
 #                   "backpack"," ultra sound machine with a monitor on it","chair","monitor"]
+prompts_lookup = ["c arm machine, which is a medical machine with a large c shaped metal arm",
+                  "a grey shelf with a pole on it",
+                " ultra sound machine with a monitor on it"]
 #___________________________________________________________________________________________________________
-prompts_lookup = ["timer","keyboard","monitors"]
+# prompts_lookup = ["timer","keyboard","monitors"]
 # prompts_lookup = ["table with a light-blue cloth","a grey shelf with a pole on it","c arm machine, which is a medical machine with a large c shaped metal arm and its connected control unit with dials and buttons","backpack"," ultra sound machine, a console with buttons and knobs, it is white with grey accents","chair"]
 
 #prompts_lookup = ["table with a light-blue cloth","bed","a grey shelf with a pole on it","c arm, which is a medical machine with a large c shaped metal arm","backpack"," ultra sound machine with a monitor on it","chair","monitor"]
@@ -144,7 +148,7 @@ prompts = [". ".join(prompts_lookup)]
 
 boxManager = PromptBoxManager(prompts, prompts_lookup)
 
-images = [image_pil_timer, image_pil_bed]
+
 
 data = {}
 # CLIP_SIM_THRESHOLD = 0.25
@@ -605,7 +609,7 @@ if __name__ == '__main__':
 
                     """ 3. Filtering 3d masks"""
                     # start filtering
-                    filtered_3d_masks = filter(aggregated_3d_masks, mask_indeces_to_be_merged, backprojected_3d_masks, if_occurance_threshold=True,occurance_thres= 0.2, small_mask_thres=20, filtered_mask_thres=0.1)
+                    filtered_3d_masks = filter(aggregated_3d_masks, mask_indeces_to_be_merged, backprojected_3d_masks, if_occurance_threshold=True,occurance_thres= 0.2, small_mask_thres=200, filtered_mask_thres=0.1)
 
                     """
                     {
@@ -615,7 +619,12 @@ if __name__ == '__main__':
                     }
                     """
                     torch.save(filtered_3d_masks, path+"/filtered_3d_masks.pth")
-
+                    
+                    # # reorder the sequence of masks following the prompt order
+                    # label_indices = filtered_3d_masks["final_class"]
+                    # label_indices = torch.tensor(label_indices)
+                    # ordered_indices = torch.sort()
+                    
                     pcd_3d = pcd_3d.T # shape (N,3)
                     
 
@@ -656,15 +665,54 @@ if __name__ == '__main__':
                         print("start_point", start_point)
                         #get the end point in the grid
                         grid_center = np.array([grid.shape[0]//2, grid.shape[1]//2])
+
                         target_pos = get_target_pos(seg_masks["final_class"][instance_index])
+                        #rotate the target position to fit the path_planning coordinates
+                        target_pos = np.dot(rot_matrix,target_pos)
+
                         print("target_pos", target_pos)
-                        target_pos = np.reshape(target_pos, (1, 3))
-                        target_pos_instance_grid_coords = get_object_grid_coordinates(target_pos, coor_to_grid)
-                        end_point = get_starting_point(target_pos_instance_grid_coords, grid)
+                        
+                        target_pos_instance_grid_coords = coor_to_grid(target_pos[0], target_pos[1],target_pos[2])
+                        end_point = get_starting_point(np.asarray([[target_pos_instance_grid_coords[0],target_pos_instance_grid_coords[1]]]), grid)
+                        
+
+                        ##dynamic path planning
+                        mock_bb0 = grid_to_coor(end_point[0]+5, end_point[1]+5)#this returns a (x,y,z) coordinate
+                        mock_bb1 = grid_to_coor(end_point[0]+5, end_point[1]-5)
+                        mock_bb2 = grid_to_coor(end_point[0]-5, end_point[1]+5)
+                        mock_bb3 = grid_to_coor(end_point[0]-5, end_point[1]-5)
+                        mock_bounding_box = np.array([mock_bb0, mock_bb1, mock_bb2, mock_bb3, mock_bb0])#also works with 8 coordinates
+                        original_loc = np.array([instance_grid_coords[:,0].mean(), instance_grid_coords[:,1].mean()])
+                        grid = register_moved_target(bb3d=mock_bounding_box, floor_plan=grid, coord_to_grid=coor_to_grid, original_position=original_loc)
+                        
+                        ##
+
+
                         print("end_point", end_point)
                         #end_point = get_starting_point(np.asarray([grid_center]), grid)
                         #get the path plan
                         path_plan = astar(grid, start_point, end_point)
+
+                        # interpolate_num = 10
+                        # path_plan_reserve = [path_plan[0], path_plan[-1]]
+                        # path_plan=path_plan_reserve
+
+                        
+                        # if len(path_plan) == 2:
+                        #     path_plan = []
+                        #     x1 = path_plan[0][0]
+                        #     y1 = path_plan[0][1]
+                        #     x2 = path_plan[1][0]
+                        #     y2 = path_plan[1][1]
+                        #     # step_size_x = (max(x1,x2) - min(x2,x1))/interpolate_num
+                        #     # step_size_y = (max(y1,y2) - min(y2,y1))/interpolate_num
+                        #     for i_x in np.arange(x1,x2,step=1 if x1<x2 else -1):
+                        #         for i_y in np.arange(y1, y2, step=1 if y1<y2 else -1):
+                        #             path_plan.append((int(i_x),int(i_y)))
+
+
+
+
                         #visualize the path plan o3d
                         path_plan_coords = np.array([grid_to_coor(point[0],point[1]) for point in path_plan])
                         #go back to world coordinates
