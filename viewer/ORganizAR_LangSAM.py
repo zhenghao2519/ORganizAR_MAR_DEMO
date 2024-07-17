@@ -676,14 +676,14 @@ if __name__ == '__main__':
                         end_point = get_starting_point(np.asarray([[target_pos_instance_grid_coords[0],target_pos_instance_grid_coords[1]]]), grid)
                         
 
-                        ##dynamic path planning
-                        mock_bb0 = grid_to_coor(end_point[0]+5, end_point[1]+5)#this returns a (x,y,z) coordinate
-                        mock_bb1 = grid_to_coor(end_point[0]+5, end_point[1]-5)
-                        mock_bb2 = grid_to_coor(end_point[0]-5, end_point[1]+5)
-                        mock_bb3 = grid_to_coor(end_point[0]-5, end_point[1]-5)
-                        mock_bounding_box = np.array([mock_bb0, mock_bb1, mock_bb2, mock_bb3, mock_bb0])#also works with 8 coordinates
-                        original_loc = np.array([instance_grid_coords[:,0].mean(), instance_grid_coords[:,1].mean()])
-                        grid = register_moved_target(bb3d=mock_bounding_box, floor_plan=grid, coord_to_grid=coor_to_grid, original_position=original_loc)
+                        # ##dynamic path planning
+                        # mock_bb0 = grid_to_coor(end_point[0]+5, end_point[1]+5)#this returns a (x,y,z) coordinate
+                        # mock_bb1 = grid_to_coor(end_point[0]+5, end_point[1]-5)
+                        # mock_bb2 = grid_to_coor(end_point[0]-5, end_point[1]+5)
+                        # mock_bb3 = grid_to_coor(end_point[0]-5, end_point[1]-5)
+                        # mock_bounding_box = np.array([mock_bb0, mock_bb1, mock_bb2, mock_bb3, mock_bb0])#also works with 8 coordinates
+                        # original_loc = np.array([instance_grid_coords[:,0].mean(), instance_grid_coords[:,1].mean()])
+                        # grid = register_moved_target(bb3d=mock_bounding_box, floor_plan=grid, coord_to_grid=coor_to_grid, original_position=original_loc)
                         
                         ##
 
