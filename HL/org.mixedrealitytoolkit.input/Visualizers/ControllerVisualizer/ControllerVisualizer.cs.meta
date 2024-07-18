@@ -3,7 +3,8 @@ guid: 8c84c0b2be85add4ea1a5d0b1b2bf027
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - fallbackControllerModel: {fileID: 4586083382732366694, guid: 602d8241b8031804397d36468cbfe53e, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

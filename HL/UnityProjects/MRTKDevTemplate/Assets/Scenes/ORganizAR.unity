@@ -80140,6 +80140,9 @@ MonoBehaviour:
   SelectedSetup: {fileID: 1689413238}
   table1: {fileID: 1866238738}
   table2: {fileID: 2105177871}
+  pathGroup1: []
+  pathGroup2: []
+  pathGroup3: []
   m_material: {fileID: 2100000, guid: d330e6b32bc73cb449eed088bf56f6d4, type: 2}
   targetRenderingsParent: {fileID: 1866238738}
 --- !u!114 &5281099424951801721
