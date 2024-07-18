@@ -629,6 +629,7 @@ if __name__ == '__main__':
                         "final_class": list of torch.Tensor# (Ins,)
                     }
                     """
+                    filtered_3d_masks = filter(aggregated_3d_masks, mask_indeces_to_be_merged, backprojected_3d_masks, if_occurance_threshold=True,occurance_thres= 0.2, small_mask_thres=200, filtered_mask_thres=0.1)
                     
                     """ 4. Choosing the best mask for each clasw"""
                     print("DEBUG" , filtered_3d_masks["ins"].shape, filtered_3d_masks["final_class"])
