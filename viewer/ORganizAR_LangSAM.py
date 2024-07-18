@@ -30,7 +30,7 @@ from utils import project_2d_to_3d_single_frame, aggregate, filter
 from path_planning.path_planning import get_floor_grid, rotation_matrix_from_vectors
 from path_planning.path_planning import get_z_norm_of_plane, get_floor_mean
 from path_planning.path_planning import astar, get_object_grid_coordinates
-from path_planning.path_planning import get_starting_point
+from path_planning.path_planning import get_starting_point,register_moved_target,get_diagonal_line
 
 # Settings --------------------------------------------------------------------
 log_file_path = "./log.txt"
@@ -621,7 +621,7 @@ if __name__ == '__main__':
                     """ 3. Filtering 3d masks"""
                     # start filtering
                     filtered_3d_masks = filter(aggregated_3d_masks, mask_indeces_to_be_merged, backprojected_3d_masks, if_occurance_threshold=True,occurance_thres= 0.2, small_mask_thres=200, filtered_mask_thres=0.1)
-                    detections = filtered_3d_masks["ins"].shape[0]
+                    #detections = filtered_3d_masks["ins"].shape[0]
                     """
                     filtered_3d_masks = {
                         "ins": torch.Tensor,  # (Ins, N)
@@ -651,7 +651,7 @@ if __name__ == '__main__':
                     filtered_3d_masks["ins"] = torch.tensor(filtered_3d_masks["ins"][final_masks_indices,:])
                     filtered_3d_masks["conf"] = torch.zeros(len(final_masks_indices))
                     filtered_3d_masks["final_class"] = final_classes
-                    
+                    detections = filtered_3d_masks["ins"].shape[0]
                         
                     
                     
@@ -691,7 +691,17 @@ if __name__ == '__main__':
                     path_plan_point_clouds = []
                     path_for_class = []
                     #get the starting point and end point of the path planning
-                    
+                    #################edited
+                    index_mask = []
+                    for i in range(max(seg_masks["final_class"])+1):
+                        if i in seg_masks["final_class"]:
+                            index_mask.append(seg_masks["final_class"].index(i))
+                    #change the order of the final class and the ins
+                    seg_masks["ins"] = [seg_masks["ins"][i] for i in index_mask ]
+                    seg_masks["final_class"] = [seg_masks["final_class"][i] for i in index_mask ]
+                    ###################edited
+
+
                     for instance_index, instance in enumerate(seg_masks["ins"]):
                         
                         instance = instance.cpu()
@@ -716,39 +726,28 @@ if __name__ == '__main__':
                         end_point = get_starting_point(np.asarray([[target_pos_instance_grid_coords[0],target_pos_instance_grid_coords[1]]]), grid)
                         
 
-                        # ##dynamic path planning
-                        # mock_bb0 = grid_to_coor(end_point[0]+5, end_point[1]+5)#this returns a (x,y,z) coordinate
-                        # mock_bb1 = grid_to_coor(end_point[0]+5, end_point[1]-5)
-                        # mock_bb2 = grid_to_coor(end_point[0]-5, end_point[1]+5)
-                        # mock_bb3 = grid_to_coor(end_point[0]-5, end_point[1]-5)
-                        # mock_bounding_box = np.array([mock_bb0, mock_bb1, mock_bb2, mock_bb3, mock_bb0])#also works with 8 coordinates
-                        # original_loc = np.array([instance_grid_coords[:,0].mean(), instance_grid_coords[:,1].mean()])
-                        # grid = register_moved_target(bb3d=mock_bounding_box, floor_plan=grid, coord_to_grid=coor_to_grid, original_position=original_loc)
-                        
-                        ##
 
-
+                        #################edited
                         print("end_point", end_point)
                         #end_point = get_starting_point(np.asarray([grid_center]), grid)
                         #get the path plan
                         path_plan = astar(grid, start_point, end_point)
 
-                        # interpolate_num = 10
-                        # path_plan_reserve = [path_plan[0], path_plan[-1]]
-                        # path_plan=path_plan_reserve
-
+                        if len(path_plan) == 2:
+                            print("using diagonal")
+                            path_plan = get_diagonal_line(start_point,end_point)
+                        #get the bounding box of the object
+                        mock_bb0 = grid_to_coor(end_point[0]+8, end_point[1]+8)
+                        mock_bb1 = grid_to_coor(end_point[0]+8, end_point[1]-8)
+                        mock_bb2 = grid_to_coor(end_point[0]-8, end_point[1]+8)
+                        mock_bb3 = grid_to_coor(end_point[0]-8, end_point[1]-8)
                         
-                        # if len(path_plan) == 2:
-                        #     path_plan = []
-                        #     x1 = path_plan[0][0]
-                        #     y1 = path_plan[0][1]
-                        #     x2 = path_plan[1][0]
-                        #     y2 = path_plan[1][1]
-                        #     # step_size_x = (max(x1,x2) - min(x2,x1))/interpolate_num
-                        #     # step_size_y = (max(y1,y2) - min(y2,y1))/interpolate_num
-                        #     for i_x in np.arange(x1,x2,step=1 if x1<x2 else -1):
-                        #         for i_y in np.arange(y1, y2, step=1 if y1<y2 else -1):
-                        #             path_plan.append((int(i_x),int(i_y)))
+                        bounding_box = np.array([mock_bb0, mock_bb1, mock_bb2, mock_bb3, mock_bb0])
+
+
+                        original_loc = np.array([instance_grid_coords[:,0].mean(), instance_grid_coords[:,1].mean()])
+                        grid = register_moved_target(bb3d=bounding_box, floor_plan=grid, coord_to_grid=coor_to_grid, original_position=original_loc)
+                        ######################edited
 
 
 
