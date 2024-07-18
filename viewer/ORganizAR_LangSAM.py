@@ -30,7 +30,7 @@ from utils import project_2d_to_3d_single_frame, aggregate, filter
 from path_planning.path_planning import get_floor_grid, rotation_matrix_from_vectors
 from path_planning.path_planning import get_z_norm_of_plane, get_floor_mean
 from path_planning.path_planning import astar, get_object_grid_coordinates
-from path_planning.path_planning import get_starting_point, register_moved_target
+from path_planning.path_planning import get_starting_point
 
 # Settings --------------------------------------------------------------------
 log_file_path = "./log.txt"
@@ -39,13 +39,13 @@ log_file_path = "./log.txt"
 from_recording = False # set to run live on HL vs from recorded dataset
 visualization_enabled = False
 write_data = True
-wsl = False
+wsl = True
 remote_docker = False
-Alienware = True
+Alienware = False
 reconstruct_point_cloud = True
 visualize_reconstruction = False
 
-inference_done = False
+
 
 
 if wsl:
@@ -61,7 +61,7 @@ else:
     print("start path: ", path_start)
 
 # HoloLens address
-host = '192.168.147.253'
+host = '192.168.0.101'
 
 # Directory containing the recorded data
 path = path_start + 'viewer/data'
@@ -103,7 +103,7 @@ max_depth = 7  # 3.0 in sample, changed to room size
 device_search = torch.device("cuda:0" if torch.cuda.is_available() else "mps")
 o3d_device = o3d.core.Device("CUDA:0" if torch.cuda.is_available() else "CPU:0")
 print("using device: ", o3d_device, " for reconstruction")
-
+inference_done = False
 # Test data setup
 # image_pil_timer = Image.open(path_start + "viewer/test_timer.png")
 # image_pil_bed = Image.open(path_start + "/viewer/test_bed.png")
@@ -130,11 +130,11 @@ print("using device: ", o3d_device, " for reconstruction")
 # prompts_lookup = ["patient bed","a grey shelf with a pole on it",
 #                   "c arm machine, which is a medical machine with a large c shaped metal arm",
 #                   "backpack"," ultra sound machine with a monitor on it","chair","monitor"]
-prompts_lookup = ["c arm machine, which is a medical machine with a large c shaped metal arm",
-                  "a grey shelf with a pole on it",
-                " ultra sound machine with a monitor on it"]
+# prompts_lookup = ["c arm machine, which is a medical machine with a large c shaped metal arm",
+#                   "a grey shelf with a pole on it",
+#                 " ultra sound machine with a monitor on it"]
 #___________________________________________________________________________________________________________
-# prompts_lookup = ["timer","keyboard","monitors"]
+prompts_lookup = ["bed","chair","monitors"]
 # prompts_lookup = ["table with a light-blue cloth","a grey shelf with a pole on it","c arm machine, which is a medical machine with a large c shaped metal arm and its connected control unit with dials and buttons","backpack"," ultra sound machine, a console with buttons and knobs, it is white with grey accents","chair"]
 
 #prompts_lookup = ["table with a light-blue cloth","bed","a grey shelf with a pole on it","c arm, which is a medical machine with a large c shaped metal arm","backpack"," ultra sound machine with a monitor on it","chair","monitor"]

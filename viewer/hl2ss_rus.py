@@ -92,5 +92,8 @@ class command_buffer(hl2ss.umq_command_buffer):
     def get_target_pos(self,target_index,axis):
         self.add(26, struct.pack('<I', target_index) + struct.pack('<I', axis))
 
+    def change_table_scale(self,ratio):
+        self.add(27, struct.pack('<I', ratio))
+
 
 
