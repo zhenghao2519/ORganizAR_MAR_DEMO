@@ -134,7 +134,7 @@ inference_done = False
 #                   "a grey shelf with a pole on it",
 #                 " ultra sound machine with a monitor on it"]
 #___________________________________________________________________________________________________________
-prompts_lookup = ["bed","chair","monitors"]
+prompts_lookup = ["bed","black office chair","grey backpack"]
 # prompts_lookup = ["table with a light-blue cloth","a grey shelf with a pole on it","c arm machine, which is a medical machine with a large c shaped metal arm and its connected control unit with dials and buttons","backpack"," ultra sound machine, a console with buttons and knobs, it is white with grey accents","chair"]
 
 #prompts_lookup = ["table with a light-blue cloth","bed","a grey shelf with a pole on it","c arm, which is a medical machine with a large c shaped metal arm","backpack"," ultra sound machine with a monitor on it","chair","monitor"]
