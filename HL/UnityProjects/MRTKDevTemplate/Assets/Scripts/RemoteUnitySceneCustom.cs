@@ -195,7 +195,7 @@ public class RemoteUnitySceneCustom : MonoBehaviour
         detections = BitConverter.ToInt32(data, 0);
       
         pc_counter += 1;
-        if (pc_counter == 4) {
+        if (pc_counter >=  4) {
             return 0;
             
         }
@@ -216,7 +216,7 @@ public class RemoteUnitySceneCustom : MonoBehaviour
     {
         if (data.Length < 4) { return 0; }
         //not more than 3 objects
-        if (pc_counter == 4)
+        if (pc_counter >= 4)
         {
             return 1;
 
