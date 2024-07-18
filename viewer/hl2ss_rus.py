@@ -75,16 +75,16 @@ class command_buffer(hl2ss.umq_command_buffer):
     def set_target_mode(self, mode):
         self.add(20, struct.pack('<I', mode))
 
-    def create_arrow(self):
-        self.add(21, b'')
+    def create_arrow(self,index):
+        self.add(21, struct.pack('<I', index))
     def send_dino_detection(self, type):
         self.add(22, struct.pack('<I', type))
 
     def check_done(self):
         self.add(23, b'')
 
-    def create_point_cloud_renderer(self, detections):
-        self.add(24, struct.pack('<I', detections))
+    def create_point_cloud_renderer(self, detections, index):
+        self.add(24, struct.pack('<I', detections) + struct.pack('<I', index))
 
     def send_point_cloud(self,len, point_cloud):
         self.add(25, struct.pack('<I', len)+ point_cloud.tobytes())

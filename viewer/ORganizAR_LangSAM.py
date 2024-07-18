@@ -221,7 +221,7 @@ def display_point_cloud(points: np.ndarray, prompt_index: int, detections: int) 
     # Add quad to Unity scene
     display_list = hl2ss_rus.command_buffer()
     display_list.begin_display_list() # Begin sequence
-    display_list.create_point_cloud_renderer(detections) 
+    display_list.create_point_cloud_renderer(detections,prompt_index) 
     # we use last, key not need, instead communicate which target it is with prompt_index, and the pc len
     display_list.set_target_mode(hl2ss_rus.TargetMode.UseLast) # Set server to use the last created object as target (this avoids waiting for the id) 
     display_list.set_world_transform(0, [0, 0, 0], [0, 0, 0, 1], [1,1, 1]) # Set the quad's world transform 
@@ -248,7 +248,7 @@ def display_centroid(points: np.ndarray, prompt_index: int) -> np.ndarray:
     point = [x_median, y_median, z_median]
     print(f"median{point}")
     point[2] = -point[2] #unity is lefthanded
-    display_list.create_arrow() #TODO store key for later manipulation
+    display_list.create_arrow(prompt_index) #TODO store key for later manipulation
     display_list.set_target_mode(hl2ss_rus.TargetMode.UseLast) 
     display_list.set_world_transform(prompt_index, point, [0, 0, 0, 1], arrow_scale) # Set the quad's world transform
     display_list.set_active(prompt_index, 1) # Make the quad visible
