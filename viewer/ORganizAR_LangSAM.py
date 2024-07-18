@@ -629,29 +629,29 @@ if __name__ == '__main__':
                         "final_class": list of torch.Tensor# (Ins,)
                     }
                     """
-                    filtered_3d_masks = filter(aggregated_3d_masks, mask_indeces_to_be_merged, backprojected_3d_masks, if_occurance_threshold=True,occurance_thres= 0.2, small_mask_thres=200, filtered_mask_thres=0.1)
+                    # filtered_3d_masks = filter(aggregated_3d_masks, mask_indeces_to_be_merged, backprojected_3d_masks, if_occurance_threshold=True,occurance_thres= 0.2, small_mask_thres=200, filtered_mask_thres=0.1)
                     
-                    """ 4. Choosing the best mask for each clasw"""
-                    print("DEBUG" , filtered_3d_masks["ins"].shape, filtered_3d_masks["final_class"])
-                    # choose the best mask for each class based on the number of points
-                    num_ins_points_after_filtering = filtered_3d_masks["ins"].sum(dim=1) # (Ins,)
-                    # print(num_ins_points_after_filtering)
-                    final_masks_indices = []  
-                    final_classes = [] # list of torch.Tensor 
-                    for class_index in range(len(prompts_lookup)):
-                        print(class_index)
-                        # get the indices of the masks that belong to the class
-                        mask_indices = torch.where(torch.tensor(filtered_3d_masks["final_class"]).squeeze() == class_index)[0]
-                        print(mask_indices)
-                        if len(mask_indices) > 0:
-                            max_index = torch.argmax(num_ins_points_after_filtering[mask_indices])
-                            final_masks_indices.append(mask_indices[max_index]) # Note: this is indicie
-                            final_classes.append(class_index)
+                    # """ 4. Choosing the best mask for each clasw"""
+                    # print("DEBUG" , filtered_3d_masks["ins"].shape, filtered_3d_masks["final_class"])
+                    # # choose the best mask for each class based on the number of points
+                    # num_ins_points_after_filtering = filtered_3d_masks["ins"].sum(dim=1) # (Ins,)
+                    # # print(num_ins_points_after_filtering)
+                    # final_masks_indices = []  
+                    # final_classes = [] # list of torch.Tensor 
+                    # for class_index in range(len(prompts_lookup)):
+                    #     print(class_index)
+                    #     # get the indices of the masks that belong to the class
+                    #     class_indices = torch.where(torch.tensor(filtered_3d_masks["final_class"]).squeeze() == class_index)[0]
+                    #     print(class_indices)
+                    #     if len(class_indices) > 0:
+                    #         max_index = torch.argmax(num_ins_points_after_filtering[class_indices])
+                    #         final_masks_indices.append(class_indices[max_index]) # Note: this is indicie
+                    #         final_classes.append(class_index)
 
-                    # print(filtered_3d_masks["ins"], final_masks_indices)
-                    filtered_3d_masks["ins"] = torch.tensor(filtered_3d_masks["ins"][final_masks_indices,:])
-                    filtered_3d_masks["conf"] = torch.zeros(len(final_masks_indices))
-                    filtered_3d_masks["final_class"] = final_classes
+                    # # print(filtered_3d_masks["ins"], final_masks_indices)
+                    # filtered_3d_masks["ins"] = torch.tensor(filtered_3d_masks["ins"][final_masks_indices,:])
+                    # filtered_3d_masks["conf"] = torch.zeros(len(final_masks_indices))
+                    # filtered_3d_masks["final_class"] = final_classes
                     
                         
                     
