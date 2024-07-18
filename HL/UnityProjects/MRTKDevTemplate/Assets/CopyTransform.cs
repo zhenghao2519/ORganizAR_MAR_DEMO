@@ -10,6 +10,11 @@ public class CopyTransform : MonoBehaviour
         stopCopying = true;
     }
 
+    public void StartCopying() {
+
+        stopCopying = false;
+    }
+
 
     void Update()
     {

@@ -23,6 +23,11 @@ public class TableRendererController : MonoBehaviour
         }*/
     }
 
+    public void DisableTable() {
+        SetUp1.SetActive(false);
+        this.GetComponent<MeshRenderer>().enabled = false;
+    }
+
     private void ToggleMeshRenderer(GameObject obj, bool state)
     {
         /*MeshRenderer renderer = obj.GetComponent<MeshRenderer>();
