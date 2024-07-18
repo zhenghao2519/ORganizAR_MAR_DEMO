@@ -55,10 +55,7 @@ def get_floor_grid(floor_points: np.ndarray,z_mean, grid_width_resolution:int = 
     grid = np.zeros((width_res, height_res))
     for i in floor_points:
         x, y = coordinate_to_grid(i[0],i[1], i[2])
-        if 0 <= x < width_res and 0 <= y < height_res:  #    grid, bb, voxel_size, coor_to_grid, grid_to_coor = get_floor_grid(coords_for_pathplanning, z_mean, 100)
-                                                        #File "/mnt/c/Users/Marc/Desktop/CS/MARPROJECT/viewer/path_planning/path_planning.py", line 57, in get_floor_grid
-                                                        #grid[x,y]=1
-                                                        #IndexError: index 100 is out of bounds for axis 1 with size 100
+        if 0 <= x < grid.shape[0] and 0 <= y < grid.shape[1]: #edited
             grid[x,y]=1
 
 
@@ -219,7 +216,7 @@ def get_starting_point(grid_coords:np.ndarray, grid:np.ndarray)->(int,int):
 #   File "/mnt/c/Users/Marc/Desktop/dev/ORganizAR_MAR_DEMO/viewer/path_planning/path_planning.py", line 218, in get_starting_point
 #     if grid[i,j] == 0:
 # IndexError: index 130 is out of bounds for axis 0 with size 100
-            if 0 <= i < grid.shape[0] and 0 <= j < grid.shape[1]: #temp fix marc
+            if 0 <= i < grid.shape[0] and 0 <= j < grid.shape[1]: #edited
                 if grid[i,j] == 0:
                     d = np.linalg.norm(np.array([i,j])-np.array(coords_center))
                     if d < distance:
@@ -280,22 +277,24 @@ def register_moved_target(bb3d: np.ndarray, floor_plan: np.ndarray, coord_to_gri
     #iterate through the possible grid points and then check if the point is in the convex hull
     for x in x_range:
         for y in y_range:
-            if floor_plan[x,y] == 0:
+            if 0 <= x < floor_plan.shape[0] and 0 <= y < floor_plan.shape[1]: #edited
+                if floor_plan[x,y] == 0:
 
-                #check if the point is in the convex hull
-                if is_in_hull(x,y, bb3d_grid, hull_area):
-                    #if the point is in the convex hull, then the point is occupied
+                    #check if the point is in the convex hull
+                    if is_in_hull(x,y, bb3d_grid, hull_area):
+                        #if the point is in the convex hull, then the point is occupied
 
-                    floor_plan[x,y] = 1
-                else:
-                    continue
+                        floor_plan[x,y] = 1
+                    else:
+                        continue
 
     radius = np.linalg.norm((max_x-min_x,max_y-min_y))/2
     #free up space in the original position
     for x in range(0,floor_plan.shape[0]):
         for y in range(0,floor_plan.shape[1]):
-            if np.linalg.norm(np.array([x,y])-np.array(original_position)) < radius and floor_plan[x,y] == 1:
-                floor_plan[x,y] = 0
+            if 0 <= x < floor_plan.shape[0] and 0 <= y < floor_plan.shape[1]: #edited
+                if np.linalg.norm(np.array([x,y])-np.array(original_position)) < radius and floor_plan[x,y] == 1:
+                    floor_plan[x,y] = 0
 
     return floor_plan
 
