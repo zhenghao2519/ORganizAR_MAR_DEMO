@@ -50,10 +50,7 @@ public class HandMenuManager : MonoBehaviour
         if (!align1)
         {
             align1 = true;
-            remoteUnitySceneCustom.SelectedSetup.transform.GetChild(0).gameObject.SetActive(false);
-            remoteUnitySceneCustom.SelectedSetup.transform.GetChild(1).gameObject.SetActive(true);
-            remoteUnitySceneCustom.SelectedSetup.transform.GetChild(2).gameObject.SetActive(false);
-
+            remoteUnitySceneCustom.SetPathGroupActive(1);
             currentHandMenu++;
             ToggleHandMenus(currentHandMenu);
         }
@@ -64,9 +61,7 @@ public class HandMenuManager : MonoBehaviour
         if (!align2)
         {
             align2 = true;
-            remoteUnitySceneCustom.SelectedSetup.transform.GetChild(0).gameObject.SetActive(false);
-            remoteUnitySceneCustom.SelectedSetup.transform.GetChild(1).gameObject.SetActive(false);
-            remoteUnitySceneCustom.SelectedSetup.transform.GetChild(2).gameObject.SetActive(true);
+            remoteUnitySceneCustom.SetPathGroupActive(2);
             currentHandMenu++;
             ToggleHandMenus(currentHandMenu);
         }
@@ -77,9 +72,7 @@ public class HandMenuManager : MonoBehaviour
         if (!align3)
         {
             align3 = true;
-            remoteUnitySceneCustom.SelectedSetup.transform.GetChild(0).gameObject.SetActive(false);
-            remoteUnitySceneCustom.SelectedSetup.transform.GetChild(1).gameObject.SetActive(false);
-            remoteUnitySceneCustom.SelectedSetup.transform.GetChild(2).gameObject.SetActive(false);
+            remoteUnitySceneCustom.SetPathGroupActive(3);
             currentHandMenu++;
             ToggleHandMenus(currentHandMenu);
         }

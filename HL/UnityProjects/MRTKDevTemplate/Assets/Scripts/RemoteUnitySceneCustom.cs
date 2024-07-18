@@ -10,6 +10,7 @@ using UnityEngine.WSA;
 using UnityEngine.UIElements;
 using System.Net.NetworkInformation;
 using static UnityEngine.XR.Interaction.Toolkit.Inputs.Interactions.SectorInteraction;
+using static Microsoft.MixedReality.GraphicsTools.MeshInstancer;
 
 public class RemoteUnitySceneCustom : MonoBehaviour
 {
@@ -30,6 +31,10 @@ public class RemoteUnitySceneCustom : MonoBehaviour
     public GameObject SelectedSetup;
     public GameObject table1;
     public GameObject table2;
+    public List<GameObject> pathGroup1 = new List<GameObject>();
+    public List<GameObject> pathGroup2 = new List<GameObject>();
+    public List<GameObject> pathGroup3 = new List<GameObject>();
+
 
     private List<Color> colorList = new List<Color>
     {
@@ -63,11 +68,73 @@ public class RemoteUnitySceneCustom : MonoBehaviour
         {
             AIDone = false; //for debugging
             targetRenderingsParent.SetActive(true);
-            SelectedSetup.transform.GetChild(0).gameObject.SetActive(true);
-            SelectedSetup.transform.GetChild(1).gameObject.SetActive(false);
-            SelectedSetup.transform.GetChild(2).gameObject.SetActive(false);
+            
             HandMenuManager.AIDone();
+            SetPathGroupActive(0);
         }
+    }
+
+    public void SetPathGroupActive(int index) {
+        switch (index)
+        {
+            case 0:
+                foreach (GameObject obj in pathGroup1)
+                {
+                    obj.SetActive(true);
+                }
+                foreach (GameObject obj in pathGroup2)
+                {
+                    obj.SetActive(false);
+                }
+                foreach (GameObject obj in pathGroup3)
+                {
+                    obj.SetActive(false);
+                }
+                break;
+            case 1:
+                foreach (GameObject obj in pathGroup1)
+                {
+                    obj.SetActive(false);
+                }
+                foreach (GameObject obj in pathGroup2)
+                {
+                    obj.SetActive(true);
+                }
+                foreach (GameObject obj in pathGroup3)
+                {
+                    obj.SetActive(false);
+                }
+                break;
+            case 2:
+                foreach (GameObject obj in pathGroup1)
+                {
+                    obj.SetActive(false);
+                }
+                foreach (GameObject obj in pathGroup2)
+                {
+                    obj.SetActive(false);
+                }
+                foreach (GameObject obj in pathGroup3)
+                {
+                    obj.SetActive(true);
+                }
+                break;
+            default:
+                foreach (GameObject obj in pathGroup1)
+                {
+                    obj.SetActive(false);
+                }
+                foreach (GameObject obj in pathGroup2)
+                {
+                    obj.SetActive(false);
+                }
+                foreach (GameObject obj in pathGroup3)
+                {
+                    obj.SetActive(false);
+                }
+                break;
+        }
+
     }
     public void SetTargetsActive() {
 
@@ -188,7 +255,16 @@ public class RemoteUnitySceneCustom : MonoBehaviour
         return result;
     }
     private int detections = 0;
+    public void SetTargetRenderings(GameObject selected) {
+        SelectedSetup = selected;
+        GameObject cArm = SelectedSetup.transform.GetChild(0).gameObject; // C-Arm
+        pathGroup1 = new List<GameObject> { cArm };
+        GameObject laparoscopicTower4 = SelectedSetup.transform.GetChild(1).gameObject; // LaparoscopicTower4path
+        pathGroup2 = new List<GameObject> { laparoscopicTower4 };
+        GameObject usTower = SelectedSetup.transform.GetChild(2).gameObject; // USTower
+        pathGroup3 = new List<GameObject> { usTower };
 
+    }
     uint MSG_CreatePCRenderer(byte[] data)
     {
         if (data.Length < 8) //detections and index
@@ -212,40 +288,21 @@ public class RemoteUnitySceneCustom : MonoBehaviour
             pcRenderer.enabled = true;
         }
 
-
-        // Get the children of SelectedSetup
-        Transform cArm = SelectedSetup.transform.GetChild(0); // C-Arm
-        Transform laparoscopicTower4 = SelectedSetup.transform.GetChild(1); // LaparoscopicTower4
-        Transform usTower = SelectedSetup.transform.GetChild(2); // USTower
-
-        // Set the parent based on the index
-        Transform parentTransform = null;
         switch (index)
         {
             case 0:
-                parentTransform = cArm;
-                parentTransform.gameObject.SetActive(true);
+                pathGroup1.Add(pcInstance);
                 break;
             case 1:
-                parentTransform = laparoscopicTower4;
-                parentTransform.gameObject.SetActive(false);
+                pathGroup2.Add(pcInstance);
                 break;
             case 2:
-                parentTransform = usTower;
-                parentTransform.gameObject.SetActive(false);
+                pathGroup3.Add(pcInstance);
                 break;
             default:
                 Debug.LogError("Invalid index value!");
                 return 0;
         }
-
-        // Set the parent and ensure the transform is identity in the world
-        pcInstance.transform.SetParent(parentTransform, false);
-        pcInstance.transform.localPosition = Vector3.zero;
-        pcInstance.transform.localRotation = Quaternion.identity;
-        pcInstance.transform.localScale = Vector3.one;
-
-
 
         return AddGameObject(pcInstance);
     }
@@ -341,38 +398,24 @@ public class RemoteUnitySceneCustom : MonoBehaviour
         }
 
 
-        // Get the children of SelectedSetup
-        Transform cArm = SelectedSetup.transform.GetChild(0); // C-Arm
-        Transform laparoscopicTower4 = SelectedSetup.transform.GetChild(1); // LaparoscopicTower4
-        Transform usTower = SelectedSetup.transform.GetChild(2); // USTower
-
+        if (data.Length < 4) { return 0; }
         int index = BitConverter.ToInt32(data, 0);
-        // Set the parent based on the index
-        Transform parentTransform = null;
         switch (index)
         {
             case 0:
-                parentTransform = cArm;
-
+                pathGroup1.Add(arrowInstance);
                 break;
             case 1:
-                parentTransform = laparoscopicTower4;
-
+                pathGroup2.Add(arrowInstance);
                 break;
             case 2:
-                parentTransform = usTower;
-
+                pathGroup3.Add(arrowInstance);
                 break;
             default:
                 Debug.LogError("Invalid index value!");
                 return 0;
         }
 
-        // Set the parent and ensure the transform is identity in the world
-        arrowInstance.transform.SetParent(parentTransform, false);
-        arrowInstance.transform.localPosition = Vector3.zero;
-        arrowInstance.transform.localRotation = Quaternion.identity;
-        arrowInstance.transform.localScale = Vector3.one;
 
         return AddGameObject(arrowInstance);
     }
