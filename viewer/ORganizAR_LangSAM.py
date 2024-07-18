@@ -621,7 +621,6 @@ if __name__ == '__main__':
                     """ 3. Filtering 3d masks"""
                     # start filtering
                     filtered_3d_masks = filter(aggregated_3d_masks, mask_indeces_to_be_merged, backprojected_3d_masks, if_occurance_threshold=True,occurance_thres= 0.2, small_mask_thres=200, filtered_mask_thres=0.1)
-                    detections = filtered_3d_masks["ins"].shape[0]
                     """
                     filtered_3d_masks = {
                         "ins": torch.Tensor,  # (Ins, N)
@@ -651,6 +650,8 @@ if __name__ == '__main__':
                     filtered_3d_masks["ins"] = torch.tensor(filtered_3d_masks["ins"][final_masks_indices,:])
                     filtered_3d_masks["conf"] = torch.zeros(len(final_masks_indices))
                     filtered_3d_masks["final_class"] = final_classes
+
+                    detections = filtered_3d_masks["ins"].shape[0]
                     
                         
                     
