@@ -15,6 +15,7 @@ public class HandMenuManager : MonoBehaviour
     private bool selectSetUpComplete = false;
     private bool aiComplete = false;
     public List<GameObject> handMenus = new List<GameObject>();
+    public RemoteUnitySceneCustom remoteUnitySceneCustom;
 
     private bool align1 = false;
     private bool align2 = false;
@@ -49,6 +50,10 @@ public class HandMenuManager : MonoBehaviour
         if (!align1)
         {
             align1 = true;
+            remoteUnitySceneCustom.SelectedSetup.transform.GetChild(0).gameObject.SetActive(false);
+            remoteUnitySceneCustom.SelectedSetup.transform.GetChild(1).gameObject.SetActive(true);
+            remoteUnitySceneCustom.SelectedSetup.transform.GetChild(2).gameObject.SetActive(false);
+
             currentHandMenu++;
             ToggleHandMenus(currentHandMenu);
         }
@@ -59,6 +64,9 @@ public class HandMenuManager : MonoBehaviour
         if (!align2)
         {
             align2 = true;
+            remoteUnitySceneCustom.SelectedSetup.transform.GetChild(0).gameObject.SetActive(false);
+            remoteUnitySceneCustom.SelectedSetup.transform.GetChild(1).gameObject.SetActive(false);
+            remoteUnitySceneCustom.SelectedSetup.transform.GetChild(2).gameObject.SetActive(true);
             currentHandMenu++;
             ToggleHandMenus(currentHandMenu);
         }
@@ -69,6 +77,9 @@ public class HandMenuManager : MonoBehaviour
         if (!align3)
         {
             align3 = true;
+            remoteUnitySceneCustom.SelectedSetup.transform.GetChild(0).gameObject.SetActive(false);
+            remoteUnitySceneCustom.SelectedSetup.transform.GetChild(1).gameObject.SetActive(false);
+            remoteUnitySceneCustom.SelectedSetup.transform.GetChild(2).gameObject.SetActive(false);
             currentHandMenu++;
             ToggleHandMenus(currentHandMenu);
         }

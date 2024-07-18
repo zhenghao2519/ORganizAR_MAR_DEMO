@@ -63,6 +63,9 @@ public class RemoteUnitySceneCustom : MonoBehaviour
         {
             AIDone = false; //for debugging
             targetRenderingsParent.SetActive(true);
+            SelectedSetup.transform.GetChild(0).gameObject.SetActive(true);
+            SelectedSetup.transform.GetChild(1).gameObject.SetActive(false);
+            SelectedSetup.transform.GetChild(2).gameObject.SetActive(false);
             HandMenuManager.AIDone();
         }
     }
@@ -102,7 +105,7 @@ public class RemoteUnitySceneCustom : MonoBehaviour
             case 18: ret = MSG_BeginDisplayList(data); break;
             case 19: ret = MSG_EndDisplayList(data); break;
             case 20: ret = MSG_SetTargetMode(data); break;
-            case 21: ret = MSG_SpawnArrow(); break;
+            case 21: ret = MSG_SpawnArrow(data); break;
             case 22: ret = MSG_ReceiveDetection(data); break;
             case 23: ret = MSG_CheckDone(); break;
             case 24: ret = MSG_CreatePCRenderer(data); break;
@@ -188,12 +191,13 @@ public class RemoteUnitySceneCustom : MonoBehaviour
 
     uint MSG_CreatePCRenderer(byte[] data)
     {
-        if (data.Length < 4)
+        if (data.Length < 8) //detections and index
         {
             return 0;
         }
         detections = BitConverter.ToInt32(data, 0);
-      
+        int index = BitConverter.ToInt32(data, 4);
+
         pc_counter += 1;
         if (pc_counter >=  4) {
             return 0;
@@ -202,12 +206,47 @@ public class RemoteUnitySceneCustom : MonoBehaviour
         GameObject pcPrefab = Resources.Load<GameObject>("PointCloudRenderer");
         GameObject pcInstance = GameObject.Instantiate(pcPrefab, Vector3.zero, Quaternion.identity);
 
-        // Set initial visibility of the arrow
         Renderer pcRenderer = pcInstance.GetComponent<Renderer>();
         if (pcRenderer != null)
         {
             pcRenderer.enabled = true;
         }
+
+
+        // Get the children of SelectedSetup
+        Transform cArm = SelectedSetup.transform.GetChild(0); // C-Arm
+        Transform laparoscopicTower4 = SelectedSetup.transform.GetChild(1); // LaparoscopicTower4
+        Transform usTower = SelectedSetup.transform.GetChild(2); // USTower
+
+        // Set the parent based on the index
+        Transform parentTransform = null;
+        switch (index)
+        {
+            case 0:
+                parentTransform = cArm;
+                parentTransform.gameObject.SetActive(true);
+                break;
+            case 1:
+                parentTransform = laparoscopicTower4;
+                parentTransform.gameObject.SetActive(false);
+                break;
+            case 2:
+                parentTransform = usTower;
+                parentTransform.gameObject.SetActive(false);
+                break;
+            default:
+                Debug.LogError("Invalid index value!");
+                return 0;
+        }
+
+        // Set the parent and ensure the transform is identity in the world
+        pcInstance.transform.SetParent(parentTransform, false);
+        pcInstance.transform.localPosition = Vector3.zero;
+        pcInstance.transform.localRotation = Quaternion.identity;
+        pcInstance.transform.localScale = Vector3.one;
+
+
+
         return AddGameObject(pcInstance);
     }
 
@@ -289,7 +328,7 @@ public class RemoteUnitySceneCustom : MonoBehaviour
         
     }
 
-    uint MSG_SpawnArrow()
+    uint MSG_SpawnArrow(byte[] data)
     {
         GameObject arrowPrefab = Resources.Load<GameObject>("3D RightArrow");
         GameObject arrowInstance = GameObject.Instantiate(arrowPrefab, Vector3.zero, Quaternion.identity);
@@ -301,9 +340,39 @@ public class RemoteUnitySceneCustom : MonoBehaviour
             arrowRenderer.enabled = true; 
         }
 
-   
-        // Align local x-axis of the arrow prefab with the world y-axis
-        arrowInstance.transform.rotation = Quaternion.FromToRotation(Vector3.right, Vector3.up);
+
+        // Get the children of SelectedSetup
+        Transform cArm = SelectedSetup.transform.GetChild(0); // C-Arm
+        Transform laparoscopicTower4 = SelectedSetup.transform.GetChild(1); // LaparoscopicTower4
+        Transform usTower = SelectedSetup.transform.GetChild(2); // USTower
+
+        int index = BitConverter.ToInt32(data, 0);
+        // Set the parent based on the index
+        Transform parentTransform = null;
+        switch (index)
+        {
+            case 0:
+                parentTransform = cArm;
+
+                break;
+            case 1:
+                parentTransform = laparoscopicTower4;
+
+                break;
+            case 2:
+                parentTransform = usTower;
+
+                break;
+            default:
+                Debug.LogError("Invalid index value!");
+                return 0;
+        }
+
+        // Set the parent and ensure the transform is identity in the world
+        arrowInstance.transform.SetParent(parentTransform, false);
+        arrowInstance.transform.localPosition = Vector3.zero;
+        arrowInstance.transform.localRotation = Quaternion.identity;
+        arrowInstance.transform.localScale = Vector3.one;
 
         return AddGameObject(arrowInstance);
     }

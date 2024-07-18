@@ -219,11 +219,12 @@ def get_starting_point(grid_coords:np.ndarray, grid:np.ndarray)->(int,int):
 #   File "/mnt/c/Users/Marc/Desktop/dev/ORganizAR_MAR_DEMO/viewer/path_planning/path_planning.py", line 218, in get_starting_point
 #     if grid[i,j] == 0:
 # IndexError: index 130 is out of bounds for axis 0 with size 100
-            if grid[i,j] == 0:
-               d = np.linalg.norm(np.array([i,j])-np.array(coords_center))
-               if d < distance:
-                   distance = d
-                   res = (i,j)
+            if 0 <= i < grid.shape[0] and 0 <= j < grid.shape[1]: #temp fix marc
+                if grid[i,j] == 0:
+                    d = np.linalg.norm(np.array([i,j])-np.array(coords_center))
+                    if d < distance:
+                        distance = d
+                        res = (i,j)
     return res
 
 def is_in_hull(x:int, y:int, points:list, original_area: float)->bool:
