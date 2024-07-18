@@ -15,6 +15,11 @@ public class HandMenuManager : MonoBehaviour
     private bool selectSetUpComplete = false;
     private bool aiComplete = false;
     public List<GameObject> handMenus = new List<GameObject>();
+
+    private bool align1 = false;
+    private bool align2 = false;
+    private bool align3 = false;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -39,6 +44,36 @@ public class HandMenuManager : MonoBehaviour
 
 
     }
+    public void Align1Complete()
+    {
+        if (!align1)
+        {
+            align1 = true;
+            currentHandMenu++;
+            ToggleHandMenus(currentHandMenu);
+        }
+    }
+
+    public void Align2Complete()
+    {
+        if (!align2)
+        {
+            align2 = true;
+            currentHandMenu++;
+            ToggleHandMenus(currentHandMenu);
+        }
+    }
+
+    public void Align3Complete()
+    {
+        if (!align3)
+        {
+            align3 = true;
+            currentHandMenu++;
+            ToggleHandMenus(currentHandMenu);
+        }
+    }
+
     public void SelectSetUpComplete()
     {
         if (!selectSetUpComplete)
