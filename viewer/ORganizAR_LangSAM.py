@@ -639,11 +639,11 @@ if __name__ == '__main__':
                     for class_index in range(len(prompts_lookup)):
                         print(class_index)
                         # get the indices of the masks that belong to the class
-                        class_indices = torch.where(torch.tensor(filtered_3d_masks["final_class"]).squeeze() == class_index)[0]
-                        print(class_indices)
-                        if len(class_indices) > 0:
-                            max_index = torch.argmax(num_ins_points_after_filtering[class_indices])
-                            final_masks_indices.append(class_indices[max_index]) # Note: this is indicie
+                        mask_indices = torch.where(torch.tensor(filtered_3d_masks["final_class"]).squeeze() == class_index)[0]
+                        print(mask_indices)
+                        if len(mask_indices) > 0:
+                            max_index = torch.argmax(num_ins_points_after_filtering[mask_indices])
+                            final_masks_indices.append(mask_indices[max_index]) # Note: this is indicie
                             final_classes.append(class_index)
 
                     # print(filtered_3d_masks["ins"], final_masks_indices)
