@@ -657,14 +657,14 @@ def solve_overlapping(
     for i, j in overlapping_masks:
         # solve overlapping
         if num_masks[i] > num_masks[j]:
-            # aggregated_masks[j] &= ~aggregated_masks[i]
+            aggregated_masks[j] &= ~aggregated_masks[i]
             
             # remove the whole mask j
-            aggregated_masks[j] = torch.zeros_like(aggregated_masks[j])
+            # aggregated_masks[j] = torch.zeros_like(aggregated_masks[j])
         else:
-            # aggregated_masks[i] &= ~aggregated_masks[j]
+            aggregated_masks[i] &= ~aggregated_masks[j]
              # remove the whole mask i
-            aggregated_masks[i] = torch.zeros_like(aggregated_masks[i])
+            # aggregated_masks[i] = torch.zeros_like(aggregated_masks[i])
 
     # update mask_counts
     for i in range(len(aggregated_masks)):
