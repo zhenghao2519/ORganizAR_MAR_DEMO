@@ -8,6 +8,8 @@ using MixedReality.Toolkit.Audio;
 using MixedReality.Toolkit.Examples;
 using UnityEngine.WSA;
 using UnityEngine.UIElements;
+using System.Net.NetworkInformation;
+using static UnityEngine.XR.Interaction.Toolkit.Inputs.Interactions.SectorInteraction;
 
 public class RemoteUnitySceneCustom : MonoBehaviour
 {
@@ -103,7 +105,7 @@ public class RemoteUnitySceneCustom : MonoBehaviour
             case 21: ret = MSG_SpawnArrow(); break;
             case 22: ret = MSG_ReceiveDetection(data); break;
             case 23: ret = MSG_CheckDone(); break;
-            case 24: ret = MSG_CreatePCRenderer(); break;
+            case 24: ret = MSG_CreatePCRenderer(data); break;
             case 25: ret = MSG_SetPointCloud(data); break;
             case 26: ret = GetTargetPosition(data); break;
             case 27: ret = ApplyTableScale(data); break;
@@ -182,11 +184,21 @@ public class RemoteUnitySceneCustom : MonoBehaviour
  
         return result;
     }
+    private int detections = 0;
 
-
-    uint MSG_CreatePCRenderer()
+    uint MSG_CreatePCRenderer(byte[] data)
     {
+        if (data.Length < 4)
+        {
+            return 0;
+        }
+        detections = BitConverter.ToInt32(data, 0);
+      
         pc_counter += 1;
+        if (pc_counter == 4) {
+            return 0;
+            
+        }
         GameObject pcPrefab = Resources.Load<GameObject>("PointCloudRenderer");
         GameObject pcInstance = GameObject.Instantiate(pcPrefab, Vector3.zero, Quaternion.identity);
 
@@ -203,7 +215,12 @@ public class RemoteUnitySceneCustom : MonoBehaviour
     uint MSG_SetPointCloud(byte[] data)
     {
         if (data.Length < 4) { return 0; }
+        //not more than 3 objects
+        if (pc_counter == 4)
+        {
+            return 1;
 
+        }
         GameObject go;
         //mode last no key used
         if (!m_remote_objects.TryGetValue(GetKey(data), out go)) { return 0; }
@@ -233,7 +250,7 @@ public class RemoteUnitySceneCustom : MonoBehaviour
         pointCloudRenderer.Init();
         Color color = colorList[pc_counter % colorList.Count];
         pointCloudRenderer.Render(arrVertices, color);
-        if (pc_counter == targets.Count) {
+        if (pc_counter == detections) {
             AIDone = true;
             
         }

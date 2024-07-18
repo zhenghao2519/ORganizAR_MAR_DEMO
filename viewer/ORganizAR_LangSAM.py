@@ -198,7 +198,7 @@ def set_up_data_struct(prompts):
         }
     return data
 
-def display_point_cloud(points: np.ndarray, prompt_index: int) -> np.ndarray:
+def display_point_cloud(points: np.ndarray, prompt_index: int, detections: int) -> np.ndarray:
     """
     Displays a subsampled point cloud in a Unity scene as small red quads.
 
@@ -221,7 +221,7 @@ def display_point_cloud(points: np.ndarray, prompt_index: int) -> np.ndarray:
     # Add quad to Unity scene
     display_list = hl2ss_rus.command_buffer()
     display_list.begin_display_list() # Begin sequence
-    display_list.create_point_cloud_renderer() 
+    display_list.create_point_cloud_renderer(detections) 
     # we use last, key not need, instead communicate which target it is with prompt_index, and the pc len
     display_list.set_target_mode(hl2ss_rus.TargetMode.UseLast) # Set server to use the last created object as target (this avoids waiting for the id) 
     display_list.set_world_transform(0, [0, 0, 0], [0, 0, 0, 1], [1,1, 1]) # Set the quad's world transform 
@@ -621,7 +621,7 @@ if __name__ == '__main__':
                     """ 3. Filtering 3d masks"""
                     # start filtering
                     filtered_3d_masks = filter(aggregated_3d_masks, mask_indeces_to_be_merged, backprojected_3d_masks, if_occurance_threshold=True,occurance_thres= 0.2, small_mask_thres=200, filtered_mask_thres=0.1)
-
+                    detections = filtered_3d_masks["ins"].shape[0]
                     """
                     {
                         "ins": torch.Tensor,  # (Ins, N)
@@ -664,7 +664,9 @@ if __name__ == '__main__':
                     path_plan_point_clouds = []
                     path_for_class = []
                     #get the starting point and end point of the path planning
+                    
                     for instance_index, instance in enumerate(seg_masks["ins"]):
+                        
                         instance = instance.cpu()
                         #shape of instance: (N,) mask
                         instance_coords = coords_for_pathplanning[instance]
@@ -676,7 +678,7 @@ if __name__ == '__main__':
                         print("start_point", start_point)
                         #get the end point in the grid
                         grid_center = np.array([grid.shape[0]//2, grid.shape[1]//2])
-
+                       
                         target_pos = get_target_pos(seg_masks["final_class"][instance_index])
                         #rotate the target position to fit the path_planning coordinates
                         target_pos = np.dot(rot_matrix,target_pos)
@@ -759,7 +761,7 @@ if __name__ == '__main__':
                                     print("sent pc target and path to HL2: ", prompts_lookup[class_filtered.cpu().numpy()])
                                     points2 = np.asarray(path_pcd.points, dtype=np.float32)
                                     combined_points = np.concatenate((points, points2), axis=0)
-                                    results_pc = display_point_cloud(combined_points,int(class_filtered.cpu().numpy()))
+                                    results_pc = display_point_cloud(combined_points,int(class_filtered.cpu().numpy()),detections)
       
                     
                             
