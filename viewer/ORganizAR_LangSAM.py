@@ -310,6 +310,16 @@ def get_target_pos(prompt_index):
     print("pos", pos)
     return pos
 
+def set_table_scale(ratio):
+    display_list = hl2ss_rus.command_buffer()
+    display_list.begin_display_list() 
+    display_list.change_table_scale(ratio)
+    display_list.end_display_list() # End sequence
+    ipc.push(display_list) # Send commands to server
+    res = ipc.pull(display_list)
+    print("table resuly:", res)
+    return res
+
 def on_press(key):
     global enable
     enable = key != keyboard.Key.esc
@@ -437,6 +447,7 @@ if __name__ == '__main__':
     print("start detecting")
     while (enable):
         if inference_done:
+            
             continue
         if from_recording:
             # Get LT Depth frame ------------------------------------------------------------
@@ -756,6 +767,8 @@ if __name__ == '__main__':
                     if visualize_reconstruction:
                         recon_vis.destroy_window()
                     inference_done = True
+                    
+                    
                     
 
 

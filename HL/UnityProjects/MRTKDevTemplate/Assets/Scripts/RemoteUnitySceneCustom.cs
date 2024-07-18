@@ -26,6 +26,8 @@ public class RemoteUnitySceneCustom : MonoBehaviour
     public HandMenuManager HandMenuManager;
 
     public GameObject SelectedSetup;
+    public GameObject table1;
+    public GameObject table2;
 
     private List<Color> colorList = new List<Color>
     {
@@ -104,10 +106,38 @@ public class RemoteUnitySceneCustom : MonoBehaviour
             case 24: ret = MSG_CreatePCRenderer(); break;
             case 25: ret = MSG_SetPointCloud(data); break;
             case 26: ret = GetTargetPosition(data); break;
+            case 27: ret = ApplyTableScale(data); break;
             case ~0U: ret = MSG_Disconnect(data); break;
         }
 
         return ret;
+    }
+
+    public uint ApplyTableScale(byte[] data)
+    {
+        if (data.Length < 4)
+        {
+            return 0;
+        }
+
+        int ratio = BitConverter.ToInt32(data, 0);
+        double scalingRatio = (double)ratio / 100;
+        ScaleObject(table1, scalingRatio);
+        ScaleObject(table2, scalingRatio);
+
+        return 1;
+    }
+
+    private void ScaleObject(GameObject obj, double scalingRatio)
+    {
+        if (obj != null)
+        {
+            obj.transform.localScale = new Vector3(
+                (float)(obj.transform.localScale.x * scalingRatio),
+                (float)(obj.transform.localScale.y * scalingRatio),
+                (float)(obj.transform.localScale.z * scalingRatio)
+            );
+        }
     }
 
     static uint FloatToUint(float value)
