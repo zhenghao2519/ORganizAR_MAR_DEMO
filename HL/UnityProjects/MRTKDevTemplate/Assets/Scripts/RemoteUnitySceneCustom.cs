@@ -340,6 +340,8 @@ public class RemoteUnitySceneCustom : MonoBehaviour
 
     uint MSG_SpawnArrow(byte[] data)
     {
+        if (data.Length < 4) { return 0; }
+        int index = BitConverter.ToInt32(data, 0);
         GameObject arrowPrefab = Resources.Load<GameObject>("3D RightArrow");
         GameObject arrowInstance = GameObject.Instantiate(arrowPrefab, Vector3.zero, Quaternion.identity);
 
@@ -358,7 +360,6 @@ public class RemoteUnitySceneCustom : MonoBehaviour
         Transform laparoscopicTower4 = SelectedSetup.transform.GetChild(1); // LaparoscopicTower4
         Transform usTower = SelectedSetup.transform.GetChild(2); // USTower
 
-        int index = BitConverter.ToInt32(data, 4);
         // Set the parent based on the index
         Transform parentTransform = null;
         switch (index)
