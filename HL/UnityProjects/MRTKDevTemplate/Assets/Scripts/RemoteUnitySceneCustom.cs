@@ -181,12 +181,47 @@ public class RemoteUnitySceneCustom : MonoBehaviour
             case 27: ret = ApplyTableScale(data); break;
             case 28: ret = MSG_CreateLineRenderer(data); break;
             case 29: ret = MSG_SetLine(data); break;
+            case 30: ret = GetCornerPosition(data); break;
             case ~0U: ret = MSG_Disconnect(data); break;
         }
 
         return ret;
     }
-    //assuming rn only getting at most 3 objects TODO
+    uint GetCornerPosition(byte[] data)
+    {
+        if (data.Length < 12) { return 0; }
+
+        int promptIndex = BitConverter.ToInt32(data, 0);
+        int cornerIndex = BitConverter.ToInt32(data, 4);
+        int axis = BitConverter.ToInt32(data, 8);
+
+        List<GameObject> childObjects = new List<GameObject>();
+        foreach (Transform child in SelectedSetup.GetComponentsInChildren<Transform>())
+        {
+            if (child.gameObject != SelectedSetup)
+            {
+                childObjects.Add(child.gameObject);
+            }
+        }
+        GameObject go = childObjects[promptIndex];
+        
+        Vector3 targetPos = go.GetComponent<GetBottomBounds>().GetBottomCorner(cornerIndex); 
+        uint result = 0;
+        switch (axis)
+        {
+            case 0:
+                result = FloatToUint(targetPos.x);
+                break;
+            case 1:
+                result = FloatToUint(targetPos.y);
+                break;
+            case 2:
+                result = FloatToUint(targetPos.z);
+                break;
+        }
+
+        return result;
+    }
 
     uint MSG_CreateLineRenderer(byte[] data)
     {

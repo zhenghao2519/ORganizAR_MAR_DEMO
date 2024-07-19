@@ -2,14 +2,20 @@ using UnityEngine;
 
 public class GetBottomBounds : MonoBehaviour
 {
-
-    public void GetBottomCorners()
+    // Function to get a specific bottom corner based on the index passed
+    public Vector3 GetBottomCorner(int index)
     {
+        if (index < 0 || index > 3)
+        {
+            Debug.LogError("Index out of range. Valid indices are 0 to 3.");
+            return Vector3.zero;
+        }
+
         MeshFilter meshFilter = GetComponent<MeshFilter>();
         if (meshFilter == null)
         {
             Debug.LogError("MeshFilter not found!");
-            return;
+            return Vector3.zero;
         }
 
         // Get the mesh bounds in local space
@@ -24,18 +30,10 @@ public class GetBottomBounds : MonoBehaviour
 
         corners[0] = center + new Vector3(-extents.x, -extents.y, -extents.z);
         corners[1] = center + new Vector3(extents.x, -extents.y, -extents.z);
-       
-        corners[4] = center + new Vector3(-extents.x, extents.y, -extents.z);
-        corners[5] = center + new Vector3(extents.x, extents.y, -extents.z);
-    
+        corners[2] = center + new Vector3(-extents.x, -extents.y, extents.z);
+        corners[3] = center + new Vector3(extents.x, -extents.y, extents.z);
 
-        // Transform corners to world space
-        for (int i = 0; i < corners.Length; i++)
-        {
-            corners[i] = transform.TransformPoint(corners[i]);
-        }
-
+        // Transform the specified corner to world space
+        return transform.TransformPoint(corners[index]);
     }
-
-  
 }

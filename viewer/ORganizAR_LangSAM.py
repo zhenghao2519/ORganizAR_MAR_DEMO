@@ -334,6 +334,22 @@ def get_target_pos(prompt_index):
     print("pos", pos)
     return pos
 
+def get_corner_pos(prompt_index, corner_index):
+    pos = []
+    for axis in range(3):
+        print("axis:" ,axis)
+        display_list = hl2ss_rus.command_buffer()
+        display_list.begin_display_list() 
+        display_list.get_target_corner_pos(prompt_index,corner_index, axis)
+        display_list.end_display_list() # End sequence
+        ipc.push(display_list) # Send commands to server
+        res = ipc.pull(display_list)[1] # Get results from server
+        res = uint_to_float(res)
+        print("get_corner_pos: ",res)
+        pos.append(res)
+    print("pos", pos)
+    return pos
+
 def set_table_scale(ratio):
     display_list = hl2ss_rus.command_buffer()
     display_list.begin_display_list() 
@@ -741,6 +757,12 @@ if __name__ == '__main__':
                         grid_center = np.array([grid.shape[0]//2, grid.shape[1]//2])
                        
                         target_pos = get_target_pos(seg_masks["final_class"][instance_index])
+
+                        corner1 = get_corner_pos(seg_masks["final_class"][instance_index],0)
+                        corner2 = get_corner_pos(seg_masks["final_class"][instance_index],1)
+                        corner3 = get_corner_pos(seg_masks["final_class"][instance_index],2)
+                        corner4 = get_corner_pos(seg_masks["final_class"][instance_index],3) #todo slow code 
+                        print("corners: ", corner1,corner2,corner3,corner4)
                         #rotate the target position to fit the path_planning coordinates
                         target_pos = np.dot(rot_matrix,target_pos)
 

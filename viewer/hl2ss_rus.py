@@ -100,5 +100,8 @@ class command_buffer(hl2ss.umq_command_buffer):
     def send_path_points(self,len, path_points):
         self.add(29, struct.pack('<I', len)+ path_points.tobytes())
 
+    def get_target_corner_pos(self,target_index,corner, axis):
+        self.add(30, struct.pack('<I', target_index) + struct.pack('<I', corner) + struct.pack('<I', axis))
+
 
 
