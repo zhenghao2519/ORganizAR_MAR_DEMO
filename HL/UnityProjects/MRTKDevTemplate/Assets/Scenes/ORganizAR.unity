@@ -13727,6 +13727,8 @@ GameObject:
   - component: {fileID: 422040605}
   - component: {fileID: 422040604}
   - component: {fileID: 422040606}
+  - component: {fileID: 422040607}
+  - component: {fileID: 422040608}
   m_Layer: 0
   m_Name: C-Arm
   m_TagString: Untagged
@@ -13811,6 +13813,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f9bfb73a7f495647848d9a22f468f35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &422040607
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 422040599}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6dbcdb0e3e2b3745a64e243b2781092, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!65 &422040608
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 422040599}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.7159523, y: 2.1946628, z: 1.9213287}
+  m_Center: {x: 0.042819753, y: 0.30551425, z: 0.24824953}
 --- !u!1 &425047841
 GameObject:
   m_ObjectHideFlags: 0
@@ -19739,6 +19774,8 @@ GameObject:
   - component: {fileID: 551069795}
   - component: {fileID: 551069794}
   - component: {fileID: 551069796}
+  - component: {fileID: 551069797}
+  - component: {fileID: 551069798}
   m_Layer: 0
   m_Name: C-Arm
   m_TagString: Untagged
@@ -19823,6 +19860,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f9bfb73a7f495647848d9a22f468f35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &551069797
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 551069789}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6dbcdb0e3e2b3745a64e243b2781092, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!65 &551069798
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 551069789}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.7159523, y: 2.1946628, z: 1.9213287}
+  m_Center: {x: 0.042819753, y: 0.30551425, z: 0.24824953}
 --- !u!1 &552061402
 GameObject:
   m_ObjectHideFlags: 0
@@ -21237,6 +21307,8 @@ GameObject:
   - component: {fileID: 616860326}
   - component: {fileID: 616860325}
   - component: {fileID: 616860327}
+  - component: {fileID: 616860328}
+  - component: {fileID: 616860329}
   m_Layer: 0
   m_Name: USTower
   m_TagString: Untagged
@@ -21321,6 +21393,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f9bfb73a7f495647848d9a22f468f35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &616860328
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 616860320}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6dbcdb0e3e2b3745a64e243b2781092, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!65 &616860329
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 616860320}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.60625213, y: 0.7287264, z: 1.3323787}
+  m_Center: {x: -0.021448495, y: 0.05592013, z: 0.06987691}
 --- !u!1 &623578521
 GameObject:
   m_ObjectHideFlags: 0
@@ -24559,6 +24664,8 @@ GameObject:
   - component: {fileID: 726533333}
   - component: {fileID: 726533332}
   - component: {fileID: 726533334}
+  - component: {fileID: 726533335}
+  - component: {fileID: 726533336}
   m_Layer: 0
   m_Name: laparoscopictower4
   m_TagString: Untagged
@@ -24643,6 +24750,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f9bfb73a7f495647848d9a22f468f35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &726533335
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 726533327}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6dbcdb0e3e2b3745a64e243b2781092, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!65 &726533336
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 726533327}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.85075724, y: 0.71202147, z: 1.5025083}
+  m_Center: {x: 0.008626178, y: -0.0009713175, z: 0.16005315}
 --- !u!1 &730154515
 GameObject:
   m_ObjectHideFlags: 0
@@ -27368,6 +27508,7 @@ GameObject:
   m_Component:
   - component: {fileID: 815503989}
   - component: {fileID: 815503990}
+  - component: {fileID: 815503991}
   m_Layer: 0
   m_Name: SetUp2
   m_TagString: Untagged
@@ -27405,6 +27546,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e312a22e4623c754cbb2795bab738050, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!65 &815503991
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 815503988}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &817513838
 GameObject:
   m_ObjectHideFlags: 0
@@ -39962,6 +40124,8 @@ GameObject:
   - component: {fileID: 1149213432}
   - component: {fileID: 1149213431}
   - component: {fileID: 1149213433}
+  - component: {fileID: 1149213434}
+  - component: {fileID: 1149213435}
   m_Layer: 0
   m_Name: laparoscopictower4
   m_TagString: Untagged
@@ -40046,6 +40210,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f9bfb73a7f495647848d9a22f468f35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1149213434
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1149213426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6dbcdb0e3e2b3745a64e243b2781092, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!65 &1149213435
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1149213426}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.85075784, y: 0.7120219, z: 1.5025085}
+  m_Center: {x: 0.0086262, y: -0.0009713383, z: 0.16005315}
 --- !u!1 &1156566252
 GameObject:
   m_ObjectHideFlags: 0
@@ -50070,6 +50267,8 @@ GameObject:
   - component: {fileID: 1471081452}
   - component: {fileID: 1471081451}
   - component: {fileID: 1471081454}
+  - component: {fileID: 1471081455}
+  - component: {fileID: 1471081456}
   m_Layer: 0
   m_Name: USTower
   m_TagString: Untagged
@@ -50154,6 +50353,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f9bfb73a7f495647848d9a22f468f35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1471081455
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1471081446}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6dbcdb0e3e2b3745a64e243b2781092, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!65 &1471081456
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1471081446}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.6062521, y: 0.72872645, z: 1.3323786}
+  m_Center: {x: -0.021448528, y: 0.055920143, z: 0.06987692}
 --- !u!1 &1474942037
 GameObject:
   m_ObjectHideFlags: 0
@@ -51839,6 +52071,8 @@ GameObject:
   - component: {fileID: 1509609470}
   - component: {fileID: 1509609469}
   - component: {fileID: 1509609471}
+  - component: {fileID: 1509609472}
+  - component: {fileID: 1509609473}
   m_Layer: 0
   m_Name: laparoscopictower4
   m_TagString: Untagged
@@ -51923,6 +52157,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f9bfb73a7f495647848d9a22f468f35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1509609472
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1509609464}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6dbcdb0e3e2b3745a64e243b2781092, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!65 &1509609473
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1509609464}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.85075754, y: 0.7120216, z: 1.502508}
+  m_Center: {x: 0.0086260475, y: -0.00097132224, z: 0.1600531}
 --- !u!1 &1513962018
 GameObject:
   m_ObjectHideFlags: 0
@@ -56255,6 +56522,8 @@ GameObject:
   - component: {fileID: 1589251109}
   - component: {fileID: 1589251108}
   - component: {fileID: 1589251110}
+  - component: {fileID: 1589251111}
+  - component: {fileID: 1589251112}
   m_Layer: 0
   m_Name: USTower
   m_TagString: Untagged
@@ -56339,6 +56608,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f9bfb73a7f495647848d9a22f468f35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1589251111
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1589251103}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6dbcdb0e3e2b3745a64e243b2781092, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!65 &1589251112
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1589251103}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.60625184, y: 0.7287262, z: 1.3323785}
+  m_Center: {x: -0.021448523, y: 0.055920154, z: 0.069876924}
 --- !u!1 &1596821450
 GameObject:
   m_ObjectHideFlags: 0
@@ -57517,6 +57819,8 @@ GameObject:
   - component: {fileID: 1642755653}
   - component: {fileID: 1642755652}
   - component: {fileID: 1642755654}
+  - component: {fileID: 1642755655}
+  - component: {fileID: 1642755656}
   m_Layer: 0
   m_Name: C-Arm
   m_TagString: Untagged
@@ -57601,6 +57905,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f9bfb73a7f495647848d9a22f468f35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1642755655
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1642755647}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6dbcdb0e3e2b3745a64e243b2781092, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!65 &1642755656
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1642755647}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.7159523, y: 2.1946628, z: 1.9213287}
+  m_Center: {x: 0.042819753, y: 0.30551425, z: 0.24824953}
 --- !u!1 &1650792405
 GameObject:
   m_ObjectHideFlags: 0
