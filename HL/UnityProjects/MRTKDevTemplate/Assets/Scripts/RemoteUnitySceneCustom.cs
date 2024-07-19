@@ -179,11 +179,139 @@ public class RemoteUnitySceneCustom : MonoBehaviour
             case 25: ret = MSG_SetPointCloud(data); break;
             case 26: ret = GetTargetPosition(data); break;
             case 27: ret = ApplyTableScale(data); break;
+            case 28: ret = MSG_CreateLineRenderer(data); break;
+            case 29: ret = MSG_SetLine(data); break;
             case ~0U: ret = MSG_Disconnect(data); break;
         }
 
         return ret;
     }
+    //assuming rn only getting at most 3 objects TODO
+
+    uint MSG_CreateLineRenderer(byte[] data)
+    {
+        if (data.Length < 4) //detections and index
+        {
+            return 0;
+        }
+
+        int index = BitConverter.ToInt32(data, 0);
+
+
+        GameObject linePrefab = Resources.Load<GameObject>("pathViz");
+        GameObject lineInstance = GameObject.Instantiate(linePrefab, Vector3.zero, Quaternion.identity);
+
+        LineRenderer lineRenderer = lineInstance.GetComponent<LineRenderer>();
+        if (lineRenderer != null)
+        {
+            lineRenderer.enabled = true;
+        }
+
+        switch (index)
+        {
+            case 0:
+                pathGroup1.Add(lineInstance);
+                break;
+            case 1:
+                pathGroup2.Add(lineInstance);
+                break;
+            case 2:
+                pathGroup3.Add(lineInstance);
+                break;
+            default:
+                Debug.LogError("Invalid index value!");
+                return 0;
+        }
+
+        return AddGameObject(lineInstance);
+    }
+
+
+    uint MSG_SetLine(byte[] data)
+    {
+        if (data.Length < 4) { return 0; }
+       
+        GameObject go;
+        //mode last no key used
+        if (!m_remote_objects.TryGetValue(GetKey(data), out go)) { return 0; }
+
+        LineRenderer lineRenderer = go.GetComponent<LineRenderer>();
+        // first el is len
+        int nPoints = BitConverter.ToInt32(data, 0);
+        Vector3[] arrVertices = new Vector3[nPoints];
+
+
+        if (data.Length > 4)
+        {
+            byte[] pointsInBytes = new byte[data.Length - 4];
+            Array.Copy(data, 4, pointsInBytes, 0, pointsInBytes.Length); //probably not needed just use offset below
+
+
+            int floatSize = 4; // Size of a float in bytes
+            for (int i = 0; i < nPoints; ++i)
+            {
+                float x = BitConverter.ToSingle(pointsInBytes, i * 3 * floatSize);
+                float y = BitConverter.ToSingle(pointsInBytes, i * 3 * floatSize + floatSize);
+                float z = BitConverter.ToSingle(pointsInBytes, i * 3 * floatSize + 2 * floatSize);
+                arrVertices[i] = new Vector3(x, y, z);
+            }
+
+        }
+
+        List<Vector3> smoothPathPoints = GenerateSmoothPath(arrVertices, 10);
+
+
+        lineRenderer.positionCount = smoothPathPoints.Count;
+        lineRenderer.SetPositions(smoothPathPoints.ToArray());
+
+
+        lineRenderer.widthMultiplier = 0.05f;
+
+        lineRenderer.numCornerVertices = 10;
+        lineRenderer.numCapVertices = 10;
+
+        return 1;
+    }
+
+    List<Vector3> GenerateSmoothPath(Vector3[] controlPoints, int smoothness)
+    {
+        List<Vector3> pathPoints = new List<Vector3>();
+
+        for (int i = 0; i < controlPoints.Length - 1; i++)
+        {
+            Vector3 p0 = controlPoints[Mathf.Max(i - 1, 0)];
+            Vector3 p1 = controlPoints[i];
+            Vector3 p2 = controlPoints[Mathf.Min(i + 1, controlPoints.Length - 1)];
+            Vector3 p3 = controlPoints[Mathf.Min(i + 2, controlPoints.Length - 1)];
+
+            for (int j = 0; j < smoothness; j++)
+            {
+                float t = j / (float)smoothness;
+                Vector3 point = CatmullRom(p0, p1, p2, p3, t);
+                pathPoints.Add(point);
+            }
+        }
+
+        // Add the last control point
+        pathPoints.Add(controlPoints[controlPoints.Length - 1]);
+
+        return pathPoints;
+    }
+
+    Vector3 CatmullRom(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
+    {
+        // Catmull-Rom spline formula
+        return 0.5f * (
+            2f * p1 +
+            (-p0 + p2) * t +
+            (2f * p0 - 5f * p1 + 4f * p2 - p3) * t * t +
+            (-p0 + 3f * p1 - 3f * p2 + p3) * t * t * t
+        );
+    }
+
+
+
+
 
     public uint ApplyTableScale(byte[] data)
     {

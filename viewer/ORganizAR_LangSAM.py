@@ -197,6 +197,29 @@ def set_up_data_struct(prompts):
             'frames': {}  # This will store information per frame, to be populated later
         }
     return data
+def display_path(points: np.ndarray, prompt_index: int) -> np.ndarray:
+    display_list = hl2ss_rus.command_buffer()
+    display_list.begin_display_list() # Begin sequence
+    # Check if subsampling is needed
+    max_chunk_size = 65535
+    if len(points) >= max_chunk_size:
+        points = points[np.random.choice(len(points), 65535, replace=False)]
+    
+    # Add quad to Unity scene
+    display_list = hl2ss_rus.command_buffer()
+    display_list.begin_display_list() # Begin sequence
+    display_list.create_line_renderer(prompt_index) 
+    # we use last, key not need, instead communicate which target it is with prompt_index, and the pc len
+    display_list.set_target_mode(hl2ss_rus.TargetMode.UseLast) # Set server to use the last created object as target (this avoids waiting for the id) 
+    display_list.set_world_transform(0, [0, 0, 0], [0, 0, 0, 1], [1,1, 1]) # Set the quad's world transform 
+    display_list.send_path_points(len(points), points) # Set the quad's texture
+    display_list.set_active(0, 1) # Make the quad visible
+    display_list.set_target_mode(hl2ss_rus.TargetMode.UseID) # Restore target mode
+    display_list.end_display_list() # End sequence
+    ipc.push(display_list) # Send commands to server
+    results = ipc.pull(display_list) # Get results from server
+    print(results)
+    return results
 
 def display_point_cloud(points: np.ndarray, prompt_index: int, detections: int) -> np.ndarray:
     """
@@ -208,7 +231,7 @@ def display_point_cloud(points: np.ndarray, prompt_index: int, detections: int) 
     Returns:
     - Array containing the results from the server after pushing commands.
     """
-    points[:, 2] = -points[:, 2] #unity coordinate system
+    
     display_list = hl2ss_rus.command_buffer()
     display_list.begin_display_list() # Begin sequence
     # Check if subsampling is needed
@@ -233,6 +256,7 @@ def display_point_cloud(points: np.ndarray, prompt_index: int, detections: int) 
     results = ipc.pull(display_list) # Get results from server
     print(results)
     return results
+
 
 
 
@@ -769,7 +793,10 @@ if __name__ == '__main__':
                     #     path = 
                     path_plan_point_clouds.append(pcd) #whole scene
                     o3d.visualization.draw_geometries(path_plan_point_clouds)
-                    
+                    first_carm = False
+                    first_shelf = False
+                    first_us =False
+                    bools = [first_carm,first_shelf,first_us]
                     for points_filtered_mask, class_filtered in zip(filtered_3d_masks["ins"], filtered_3d_masks["final_class"]): # points_filtered_mask shape (N)
                         points_filtered = pcd_3d[points_filtered_mask.cpu().numpy()]
                         
@@ -785,9 +812,17 @@ if __name__ == '__main__':
                             for path_pcd, class_index in zip(path_plan_point_clouds, path_for_class):
                                 if class_index == int(class_filtered.cpu().numpy()):
                                     print("sent pc target and path to HL2: ", prompts_lookup[class_filtered.cpu().numpy()])
+                                    
                                     points2 = np.asarray(path_pcd.points, dtype=np.float32)
+                                    print("pathshape:", points2.shape)
+                                    points[:, 2] = -points[:, 2] #unity coordinate system
+                                    points2[:, 2] = -points2[:, 2] #unity coordinate system
                                     combined_points = np.concatenate((points, points2), axis=0)
+                                    
+                                    result_path = display_path(points2,int(class_filtered.cpu().numpy()))
                                     results_pc = display_point_cloud(combined_points,int(class_filtered.cpu().numpy()),detections)
+                                    #path rendered from bed to carm but also between monitor and us, laparoscpic missing
+                                    #only one should be visible
       
                     
                             

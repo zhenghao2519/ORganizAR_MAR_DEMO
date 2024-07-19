@@ -95,5 +95,10 @@ class command_buffer(hl2ss.umq_command_buffer):
     def change_table_scale(self,ratio):
         self.add(27, struct.pack('<I', ratio))
 
+    def create_line_renderer(self, index):
+            self.add(28, struct.pack('<I', index))  #streaming index so we can set it as child of the corresponding path guidance group
+    def send_path_points(self,len, path_points):
+        self.add(29, struct.pack('<I', len)+ path_points.tobytes())
+
 
 
