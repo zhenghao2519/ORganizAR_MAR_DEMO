@@ -183,6 +183,13 @@ if reconstruct_point_cloud:
         recon_vis.create_window()
         print("initialized visualizer")
 
+
+def target_point_conversion(target_pos,rot_matrix):
+    target_pos = np.dot(rot_matrix,target_pos)
+    target_pos_instance_grid_coords = coor_to_grid(target_pos[0], target_pos[1],target_pos[2])
+    end_point = get_starting_point(np.asarray([[target_pos_instance_grid_coords[0],target_pos_instance_grid_coords[1]]]), grid)
+    return end_point
+                        
 def apply_clip_embedding_prompt(prompt):
     text = clip.tokenize([prompt]).to(device_search)
     return text
@@ -755,26 +762,19 @@ if __name__ == '__main__':
                         print("start_point", start_point)
                         #get the end point in the grid
                         grid_center = np.array([grid.shape[0]//2, grid.shape[1]//2])
-                       
-                        target_pos = get_target_pos(seg_masks["final_class"][instance_index])
-
-                        corner1 = get_corner_pos(seg_masks["final_class"][instance_index],0)
-                        corner2 = get_corner_pos(seg_masks["final_class"][instance_index],1)
-                        corner3 = get_corner_pos(seg_masks["final_class"][instance_index],2)
-                        corner4 = get_corner_pos(seg_masks["final_class"][instance_index],3) #todo slow code 
-                        print("corners: ", corner1,corner2,corner3,corner4)
                         #rotate the target position to fit the path_planning coordinates
-                        target_pos = np.dot(rot_matrix,target_pos)
-
-                        print("target_pos", target_pos)
-                        
-                        target_pos_instance_grid_coords = coor_to_grid(target_pos[0], target_pos[1],target_pos[2])
-                        end_point = get_starting_point(np.asarray([[target_pos_instance_grid_coords[0],target_pos_instance_grid_coords[1]]]), grid)
-                        
-
-
-                        #################edited
+                        target_pos = get_target_pos(seg_masks["final_class"][instance_index])
+                        end_point = target_point_conversion(target_pos,rot_matrix)
                         print("end_point", end_point)
+
+                        corner1 = target_point_conversion(get_corner_pos(seg_masks["final_class"][instance_index],0),rot_matrix)
+                        corner2 = target_point_conversion(get_corner_pos(seg_masks["final_class"][instance_index],1),rot_matrix)
+                        corner3 = target_point_conversion(get_corner_pos(seg_masks["final_class"][instance_index],2),rot_matrix)
+                        corner4 = target_point_conversion(get_corner_pos(seg_masks["final_class"][instance_index],3),rot_matrix) #todo slow code 
+                        print("corners: ", corner1,corner2,corner3,corner4)
+
+
+                        
                         #end_point = get_starting_point(np.asarray([grid_center]), grid)
                         #get the path plan
                         path_plan = astar(grid, start_point, end_point)
@@ -783,10 +783,14 @@ if __name__ == '__main__':
                             print("using diagonal")
                             path_plan = get_diagonal_line(start_point,end_point)
                         #get the bounding box of the object
-                        mock_bb0 = grid_to_coor(end_point[0]+8, end_point[1]+8)
-                        mock_bb1 = grid_to_coor(end_point[0]+8, end_point[1]-8)
-                        mock_bb2 = grid_to_coor(end_point[0]-8, end_point[1]+8)
-                        mock_bb3 = grid_to_coor(end_point[0]-8, end_point[1]-8)
+                        # mock_bb0 = grid_to_coor(end_point[0]+8, end_point[1]+8)
+                        # mock_bb1 = grid_to_coor(end_point[0]+8, end_point[1]-8)
+                        # mock_bb2 = grid_to_coor(end_point[0]-8, end_point[1]+8)
+                        # mock_bb3 = grid_to_coor(end_point[0]-8, end_point[1]-8)
+                        mock_bb0 = grid_to_coor(corner1[0], corner1[1])
+                        mock_bb1 = grid_to_coor(corner2[0], corner2[1])
+                        mock_bb2 = grid_to_coor(corner3[0], corner3[1])
+                        mock_bb3 = grid_to_coor(corner4[0], corner4[1])
                         
                         bounding_box = np.array([mock_bb0, mock_bb1, mock_bb2, mock_bb3, mock_bb0])
 
