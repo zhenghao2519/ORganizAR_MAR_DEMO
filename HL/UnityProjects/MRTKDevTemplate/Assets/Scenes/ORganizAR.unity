@@ -13726,6 +13726,7 @@ GameObject:
   - component: {fileID: 422040600}
   - component: {fileID: 422040605}
   - component: {fileID: 422040604}
+  - component: {fileID: 422040606}
   m_Layer: 0
   m_Name: C-Arm
   m_TagString: Untagged
@@ -13798,6 +13799,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 422040599}
   m_Mesh: {fileID: -7063150774129429252, guid: 8e4e11bd2869e7a418240715455a93c9, type: 3}
+--- !u!114 &422040606
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 422040599}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f9bfb73a7f495647848d9a22f468f35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &425047841
 GameObject:
   m_ObjectHideFlags: 0
@@ -19725,6 +19738,7 @@ GameObject:
   - component: {fileID: 551069790}
   - component: {fileID: 551069795}
   - component: {fileID: 551069794}
+  - component: {fileID: 551069796}
   m_Layer: 0
   m_Name: C-Arm
   m_TagString: Untagged
@@ -19797,6 +19811,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 551069789}
   m_Mesh: {fileID: -7063150774129429252, guid: 8e4e11bd2869e7a418240715455a93c9, type: 3}
+--- !u!114 &551069796
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 551069789}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f9bfb73a7f495647848d9a22f468f35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &552061402
 GameObject:
   m_ObjectHideFlags: 0
@@ -21210,6 +21236,7 @@ GameObject:
   - component: {fileID: 616860321}
   - component: {fileID: 616860326}
   - component: {fileID: 616860325}
+  - component: {fileID: 616860327}
   m_Layer: 0
   m_Name: USTower
   m_TagString: Untagged
@@ -21282,6 +21309,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 616860320}
   m_Mesh: {fileID: -2907462421268956602, guid: 49013ac8947ae894dbab045d727890e2, type: 3}
+--- !u!114 &616860327
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 616860320}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f9bfb73a7f495647848d9a22f468f35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &623578521
 GameObject:
   m_ObjectHideFlags: 0
@@ -24519,6 +24558,7 @@ GameObject:
   - component: {fileID: 726533328}
   - component: {fileID: 726533333}
   - component: {fileID: 726533332}
+  - component: {fileID: 726533334}
   m_Layer: 0
   m_Name: laparoscopictower4
   m_TagString: Untagged
@@ -24591,6 +24631,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 726533327}
   m_Mesh: {fileID: -2907462421268956602, guid: 325e74e4fd445314cb3f28f433245c47, type: 3}
+--- !u!114 &726533334
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 726533327}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f9bfb73a7f495647848d9a22f468f35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &730154515
 GameObject:
   m_ObjectHideFlags: 0
@@ -39909,6 +39961,7 @@ GameObject:
   - component: {fileID: 1149213427}
   - component: {fileID: 1149213432}
   - component: {fileID: 1149213431}
+  - component: {fileID: 1149213433}
   m_Layer: 0
   m_Name: laparoscopictower4
   m_TagString: Untagged
@@ -39981,6 +40034,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1149213426}
   m_Mesh: {fileID: -2907462421268956602, guid: 325e74e4fd445314cb3f28f433245c47, type: 3}
+--- !u!114 &1149213433
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1149213426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f9bfb73a7f495647848d9a22f468f35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1156566252
 GameObject:
   m_ObjectHideFlags: 0
@@ -50004,6 +50069,7 @@ GameObject:
   - component: {fileID: 1471081447}
   - component: {fileID: 1471081452}
   - component: {fileID: 1471081451}
+  - component: {fileID: 1471081454}
   m_Layer: 0
   m_Name: USTower
   m_TagString: Untagged
@@ -50076,6 +50142,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1471081446}
   m_Mesh: {fileID: -2907462421268956602, guid: 49013ac8947ae894dbab045d727890e2, type: 3}
+--- !u!114 &1471081454
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1471081446}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f9bfb73a7f495647848d9a22f468f35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1474942037
 GameObject:
   m_ObjectHideFlags: 0
@@ -51760,6 +51838,7 @@ GameObject:
   - component: {fileID: 1509609465}
   - component: {fileID: 1509609470}
   - component: {fileID: 1509609469}
+  - component: {fileID: 1509609471}
   m_Layer: 0
   m_Name: laparoscopictower4
   m_TagString: Untagged
@@ -51832,6 +51911,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1509609464}
   m_Mesh: {fileID: -2907462421268956602, guid: 325e74e4fd445314cb3f28f433245c47, type: 3}
+--- !u!114 &1509609471
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1509609464}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f9bfb73a7f495647848d9a22f468f35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1513962018
 GameObject:
   m_ObjectHideFlags: 0
@@ -56163,6 +56254,7 @@ GameObject:
   - component: {fileID: 1589251104}
   - component: {fileID: 1589251109}
   - component: {fileID: 1589251108}
+  - component: {fileID: 1589251110}
   m_Layer: 0
   m_Name: USTower
   m_TagString: Untagged
@@ -56235,6 +56327,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1589251103}
   m_Mesh: {fileID: -2907462421268956602, guid: 49013ac8947ae894dbab045d727890e2, type: 3}
+--- !u!114 &1589251110
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1589251103}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f9bfb73a7f495647848d9a22f468f35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1596821450
 GameObject:
   m_ObjectHideFlags: 0
@@ -57412,6 +57516,7 @@ GameObject:
   - component: {fileID: 1642755648}
   - component: {fileID: 1642755653}
   - component: {fileID: 1642755652}
+  - component: {fileID: 1642755654}
   m_Layer: 0
   m_Name: C-Arm
   m_TagString: Untagged
@@ -57484,6 +57589,18 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1642755647}
   m_Mesh: {fileID: -7063150774129429252, guid: 8e4e11bd2869e7a418240715455a93c9, type: 3}
+--- !u!114 &1642755654
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1642755647}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f9bfb73a7f495647848d9a22f468f35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1650792405
 GameObject:
   m_ObjectHideFlags: 0
