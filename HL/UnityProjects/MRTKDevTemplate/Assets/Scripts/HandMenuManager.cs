@@ -121,12 +121,28 @@ public class HandMenuManager : MonoBehaviour
 
     }
 
-    private void ToggleHandMenus(int index) {
+    private void ToggleHandMenus(int index)
+    {
+        // Store the transform of the currently active menu (if any)
+        Transform currentActiveTransform = null;
         foreach (var menu in handMenus)
         {
-            menu.SetActive(false);
+            if (menu.activeSelf)
+            {
+                currentActiveTransform = menu.transform;
+                menu.SetActive(false);
+            }
         }
+
+        // Activate the new menu
         handMenus[index].SetActive(true);
 
+        // If there was an active menu before, copy its transform properties
+        if (currentActiveTransform != null)
+        {
+            handMenus[index].transform.position = currentActiveTransform.position;
+            handMenus[index].transform.rotation = currentActiveTransform.rotation;
+            handMenus[index].transform.localScale = currentActiveTransform.localScale;
+        }
     }
 }
